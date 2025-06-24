@@ -5,15 +5,18 @@ import CafeCard from '../components/CafeCard';
 import CafeDetail from '../components/CafeDetail';
 import ReviewModal from '../components/ReviewModal';
 import AdBanner from '../components/AdBanner';
-import { getCafesNearby, getCafeById } from '../services/cafeService';
+import SimpleCafeList from '../components/SimpleCafeList';
+import { getCafesNearby, getCafeById, getNearbySimpleCafes } from '../services/cafeService';
 import { Cafe } from '../types/cafe';
 
 const Index = () => {
   const [cafes, setCafes] = useState<Cafe[]>([]);
+  const [simpleCafes, setSimpleCafes] = useState<any[]>([]);
   const [selectedCafe, setSelectedCafe] = useState<Cafe | null>(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState<string>('현재 위치');
+  const [showSimpleList, setShowSimpleList] = useState(false);
 
   useEffect(() => {
     // Simulate getting user location
@@ -37,7 +40,16 @@ const Index = () => {
     try {
       setLoading(true);
       const nearbyeCafes = await getCafesNearby();
-      setCafes(nearbyeCafes);
+      
+      if (nearbyeCafes.length === 0) {
+        // No cafes found in database, show simple list
+        setShowSimpleList(true);
+        const simpleCafeList = await getNearbySimpleCafes();
+        setSimpleCafes(simpleCafeList);
+      } else {
+        setCafes(nearbyeCafes);
+        setShowSimpleList(false);
+      }
     } catch (error) {
       console.error('카페 데이터 로딩 실패:', error);
     } finally {
@@ -82,7 +94,7 @@ const Index = () => {
             </div>
             <div className="bg-orange-100 px-3 py-1 rounded-full">
               <span className="text-sm font-medium text-orange-800">
-                {cafes.length}개 카페 발견
+                {showSimpleList ? `${simpleCafes.length}개 카페 발견` : `${cafes.length}개 카페 발견`}
               </span>
             </div>
           </div>
@@ -92,42 +104,51 @@ const Index = () => {
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="space-y-6">
-          {/* Purpose Filter */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">어떤 목적으로 방문하시나요?</h2>
-            <div className="flex flex-wrap gap-3">
-              {['공부', '업무', '미팅', '휴식', '데이트'].map((purpose) => (
-                <button
-                  key={purpose}
-                  className="px-4 py-2 bg-orange-100 hover:bg-orange-200 text-orange-800 rounded-full text-sm font-medium transition-colors"
-                >
-                  {purpose}
+          {!showSimpleList && (
+            <>
+              {/* Purpose Filter */}
+              <div className="bg-white rounded-2xl p-6 shadow-sm">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">어떤 목적으로 방문하시나요?</h2>
+                <div className="flex flex-wrap gap-3">
+                  {['공부', '업무', '미팅', '휴식', '데이트'].map((purpose) => (
+                    <button
+                      key={purpose}
+                      className="px-4 py-2 bg-orange-100 hover:bg-orange-200 text-orange-800 rounded-full text-sm font-medium transition-colors"
+                    >
+                      {purpose}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Cafe List */}
+              <div className="space-y-4">
+                {cafes.map((cafe, index) => (
+                  <React.Fragment key={cafe.id}>
+                    <CafeCard
+                      cafe={cafe}
+                      onClick={() => handleCafeClick(cafe.id)}
+                      onWriteReview={() => handleWriteReview(cafe)}
+                    />
+                    {/* Ad Banner after 2nd cafe */}
+                    {index === 1 && <AdBanner />}
+                  </React.Fragment>
+                ))}
+              </div>
+
+              {/* Load More Button */}
+              <div className="text-center py-6">
+                <button className="bg-white hover:bg-gray-50 text-gray-700 px-6 py-3 rounded-full border border-gray-200 font-medium transition-colors">
+                  더 많은 카페 보기
                 </button>
-              ))}
-            </div>
-          </div>
+              </div>
+            </>
+          )}
 
-          {/* Cafe List */}
-          <div className="space-y-4">
-            {cafes.map((cafe, index) => (
-              <React.Fragment key={cafe.id}>
-                <CafeCard
-                  cafe={cafe}
-                  onClick={() => handleCafeClick(cafe.id)}
-                  onWriteReview={() => handleWriteReview(cafe)}
-                />
-                {/* Ad Banner after 2nd cafe */}
-                {index === 1 && <AdBanner />}
-              </React.Fragment>
-            ))}
-          </div>
-
-          {/* Load More Button */}
-          <div className="text-center py-6">
-            <button className="bg-white hover:bg-gray-50 text-gray-700 px-6 py-3 rounded-full border border-gray-200 font-medium transition-colors">
-              더 많은 카페 보기
-            </button>
-          </div>
+          {/* Simple Cafe List when no database results */}
+          {showSimpleList && (
+            <SimpleCafeList cafes={simpleCafes} />
+          )}
         </div>
       </div>
 

@@ -121,10 +121,34 @@ const mockCafes: Cafe[] = [
   }
 ];
 
+// Simple nearby cafes for when no database results are found
+const nearbyyCafes = [
+  { name: '스타벅스 강남점', address: '강남구 테헤란로 100', distance: '0.1km' },
+  { name: '투썸플레이스 역삼점', address: '강남구 역삼로 200', distance: '0.3km' },
+  { name: '커피빈 논현점', address: '강남구 논현로 300', distance: '0.4km' },
+  { name: '이디야커피 선릉점', address: '강남구 선릉로 400', distance: '0.5km' },
+  { name: '할리스커피 강남센터점', address: '강남구 강남대로 500', distance: '0.6km' }
+];
+
 export const getCafesNearby = async (): Promise<Cafe[]> => {
   // Simulate API call delay
   await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Simulate sometimes returning empty results (for testing)
+  // In a real app, this would be based on actual location and database query
+  const shouldReturnEmpty = Math.random() < 0.3; // 30% chance of empty results for demo
+  
+  if (shouldReturnEmpty) {
+    return [];
+  }
+  
   return mockCafes;
+};
+
+export const getNearbySimpleCafes = async () => {
+  // Simulate API call delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return nearbyyCafes;
 };
 
 export const getCafeById = async (id: string): Promise<Cafe> => {
