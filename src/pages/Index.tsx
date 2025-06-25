@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { MapPin, Clock, Wifi, Zap, Users, Star, Plus } from 'lucide-react';
 import CafeCard from '../components/CafeCard';
@@ -121,8 +120,8 @@ const Index = () => {
                 </div>
               </div>
 
-              {/* Cafe List */}
-              <div className="space-y-4">
+              {/* Cafe Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {cafes.map((cafe, index) => (
                   <React.Fragment key={cafe.id}>
                     <CafeCard
@@ -130,8 +129,12 @@ const Index = () => {
                       onClick={() => handleCafeClick(cafe.id)}
                       onWriteReview={() => handleWriteReview(cafe)}
                     />
-                    {/* Ad Banner after 2nd cafe */}
-                    {index === 1 && <AdBanner />}
+                    {/* Ad Banner after 2nd cafe on mobile, after 4th on desktop */}
+                    {((index === 1 && window.innerWidth < 768) || (index === 3 && window.innerWidth >= 768)) && (
+                      <div className="md:col-span-2">
+                        <AdBanner />
+                      </div>
+                    )}
                   </React.Fragment>
                 ))}
               </div>
