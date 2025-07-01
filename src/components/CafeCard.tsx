@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { MapPin, Star, Clock, Wifi, Zap, Users } from 'lucide-react';
 import { Cafe } from '../types/cafe';
@@ -7,9 +6,10 @@ interface CafeCardProps {
   cafe: Cafe;
   onClick: () => void;
   onWriteReview: () => void;
+  isFromDatabase?: boolean;
 }
 
-const CafeCard: React.FC<CafeCardProps> = ({ cafe, onClick, onWriteReview }) => {
+const CafeCard: React.FC<CafeCardProps> = ({ cafe, onClick, onWriteReview, isFromDatabase = false }) => {
   const getFeatureIcon = (feature: string) => {
     switch (feature) {
       case 'wifi':
@@ -52,7 +52,7 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe, onClick, onWriteReview }) => 
             </span>
           </div>
           <div className="absolute top-4 right-4">
-            {cafe.features.recommended && (
+            {isFromDatabase && cafe.features.recommended && (
               <span className="bg-orange-500 text-white px-2 py-1 rounded-full text-sm font-medium">
                 추천
               </span>
@@ -76,7 +76,6 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe, onClick, onWriteReview }) => 
                 <Star className="w-4 h-4 text-yellow-400 fill-current mr-1" />
                 <span className="font-semibold text-gray-900">{cafe.rating}</span>
               </div>
-              <span className="text-sm text-gray-600">{cafe.reviewCount}개 리뷰</span>
             </div>
           </div>
 
@@ -93,19 +92,7 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe, onClick, onWriteReview }) => 
             ))}
           </div>
 
-          {/* Tags */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            {cafe.tags.slice(0, 3).map((tag) => (
-              <span
-                key={tag}
-                className="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-medium"
-              >
-                #{tag}
-              </span>
-            ))}
-          </div>
-
-          {/* Hours & Price */}
+          {/* Hours */}
           <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
             <div className="flex items-center">
               <Clock className="w-4 h-4 mr-1" />
@@ -113,7 +100,6 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe, onClick, onWriteReview }) => 
                 {cafe.hours.isOpen ? '영업중' : '영업종료'} • {cafe.hours.open}-{cafe.hours.close}
               </span>
             </div>
-            <span>{cafe.priceRange}</span>
           </div>
         </div>
       </div>

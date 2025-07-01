@@ -1,11 +1,9 @@
-
 export interface Cafe {
   id: string;
   name: string;
   address: string;
   distance: number;
   rating: number;
-  reviewCount: number;
   images: string[];
   logo?: string;
   features: {
@@ -22,8 +20,6 @@ export interface Cafe {
     close: string;
     isOpen: boolean;
   };
-  priceRange: string;
-  tags: string[];
   reviews: Review[];
 }
 

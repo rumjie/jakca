@@ -1,4 +1,3 @@
-
 import { Cafe, Review, NewReview } from '../types/cafe';
 
 // Mock data - in a real app, this would come from your database
@@ -9,7 +8,6 @@ const mockCafes: Cafe[] = [
     address: '강남구 테헤란로 123',
     distance: 0.2,
     rating: 4.5,
-    reviewCount: 127,
     images: [
       'https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=800',
       'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800'
@@ -28,8 +26,6 @@ const mockCafes: Cafe[] = [
       close: '23:00',
       isOpen: true
     },
-    priceRange: '음료 4,000-7,000원',
-    tags: ['공부하기좋은', '콘센트많음', '와이파이빠름', '조용함'],
     reviews: [
       {
         id: '1',
@@ -48,7 +44,6 @@ const mockCafes: Cafe[] = [
     address: '강남구 논현로 456',
     distance: 0.4,
     rating: 4.2,
-    reviewCount: 89,
     images: [
       'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800',
       'https://images.unsplash.com/photo-1496307653780-42ee777d4833?w=800'
@@ -67,8 +62,6 @@ const mockCafes: Cafe[] = [
       close: '22:00',
       isOpen: true
     },
-    priceRange: '음료 5,000-9,000원',
-    tags: ['분위기좋음', '커피맛있음', '데이트', '인스타그램'],
     reviews: [
       {
         id: '2',
@@ -87,7 +80,6 @@ const mockCafes: Cafe[] = [
     address: '강남구 강남대로 789',
     distance: 0.6,
     rating: 4.0,
-    reviewCount: 156,
     images: [
       'https://images.unsplash.com/photo-1500673922987-e212871fec22?w=800'
     ],
@@ -105,8 +97,6 @@ const mockCafes: Cafe[] = [
       close: '24:00',
       isOpen: true
     },
-    priceRange: '시간당 2,000원',
-    tags: ['넓은공간', '콘센트많음', '24시간', '개인석'],
     reviews: [
       {
         id: '3',
@@ -121,10 +111,44 @@ const mockCafes: Cafe[] = [
   }
 ];
 
+const mockCafes2: Cafe[] = [
+  {
+    id: '4',
+    name: '카페 새로고침',
+    address: '강남구 리로드로 1',
+    distance: 0.1,
+    rating: 4.8,
+    images: [
+      'https://images.unsplash.com/photo-1519125323398-675f0ddb6308?w=800'
+    ],
+    features: {
+      seats: 30,
+      deskHeight: 'mixed',
+      outlets: 'many',
+      wifi: 'excellent',
+      atmosphere: '새로고침 분위기',
+      timeLimit: '없음',
+      recommended: true
+    },
+    hours: {
+      open: '09:00',
+      close: '21:00',
+      isOpen: true
+    },
+    reviews: []
+  }
+  // 필요하면 더 추가
+];
+
 export const getCafesNearby = async (): Promise<Cafe[]> => {
   // Simulate API call delay
   await new Promise(resolve => setTimeout(resolve, 1000));
   return mockCafes;
+};
+
+export const getCafesNearby2 = async (): Promise<Cafe[]> => {
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  return mockCafes2;
 };
 
 export const getCafeById = async (id: string): Promise<Cafe> => {

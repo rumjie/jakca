@@ -1,34 +1,67 @@
-
 import React, { useState, useEffect } from 'react';
 import { MapPin, Clock, Wifi, Zap, Users, Star, Plus } from 'lucide-react';
 import CafeCard from '../components/CafeCard';
 import CafeDetail from '../components/CafeDetail';
 import ReviewModal from '../components/ReviewModal';
 import AdBanner from '../components/AdBanner';
-import { getCafesNearby, getCafeById } from '../services/cafeService';
+// import { getCafesNearby, getCafeById } from '../services/cafeService';
+import SimpleCafeList from '../components/SimpleCafeList';
+import { getCafesNearby, getCafeById, getCafesNearby2 } from '../services/cafeService';
 import { Cafe } from '../types/cafe';
 
 const Index = () => {
   const [cafes, setCafes] = useState<Cafe[]>([]);
+  const [simpleCafes, setSimpleCafes] = useState<any[]>([]);
   const [selectedCafe, setSelectedCafe] = useState<Cafe | null>(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState<string>('현재 위치');
-
+  const [showSimpleList, setShowSimpleList] = useState(false);
   useEffect(() => {
-    // Simulate getting user location
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation('강남구, 서울');
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          // console.log('위치 정보:', latitude, longitude);
+          const KAKAO_API_KEY = import.meta.env.VITE_KAKAO_REST_API_KEY;
+          try {
+            const response = await fetch(
+              `https://dapi.kakao.com/v2/local/geo/coord2address.json?x=${longitude}&y=${latitude}`,
+              {
+                headers: {
+                  Authorization: `KakaoAK ${KAKAO_API_KEY}`,
+                },
+              }
+            );
+            const data = await response.json();
+
+            let address = '내 위치';
+            if (data.documents && data.documents.length > 0) {
+              const addrObj = data.documents[0].address;
+              if (addrObj) {
+                address = `${addrObj.region_2depth_name} ${addrObj.region_3depth_name}`;
+              } else {
+                // fallback: address_name에서 구, 동만 추출
+                const fullAddress = data.documents[0].address?.address_name || '내 위치';
+                const arr = fullAddress.split(' ');
+                address = arr.length >= 3 ? `${arr[1]} ${arr[2]}` : fullAddress;
+              }
+            }
+            setUserLocation(address);
+          } catch (e) {
+            console.error('카카오 역지오코딩 실패:', e);
+            setUserLocation('내 위치');
+          }
           loadCafes();
         },
-        () => {
-          setUserLocation('강남구, 서울');
+        (error) => {
+          console.error('위치 정보 에러:', error);
+          setUserLocation('위치 정보 없음');
           loadCafes();
         }
       );
     } else {
+      setUserLocation('위치 정보 없음');
       loadCafes();
     }
   }, []);
@@ -37,7 +70,17 @@ const Index = () => {
     try {
       setLoading(true);
       const nearbyeCafes = await getCafesNearby();
-      setCafes(nearbyeCafes);
+      // setCafes(nearbyeCafes);
+            
+      if (nearbyeCafes.length === 0) {
+        // No cafes found in database, show simple list
+        setShowSimpleList(true);
+        const simpleCafeList = await getNearbySimpleCafes();
+        setSimpleCafes(simpleCafeList);
+      } else {
+        setCafes(nearbyeCafes);
+        setShowSimpleList(false);
+      }
     } catch (error) {
       console.error('카페 데이터 로딩 실패:', error);
     } finally {
@@ -59,6 +102,14 @@ const Index = () => {
     setShowReviewModal(true);
   };
 
+  const handleRefresh = async () => {
+    setLoading(true);
+    const newCafes = await getCafesNearby2();
+    setCafes(newCafes);
+    setLoading(false);
+    // window.location.reload();
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center">
@@ -74,7 +125,7 @@ const Index = () => {
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">카페 찾기</h1>
+              <h1 className="text-2xl font-bold text-gray-900">JAKCA - 작업하기 좋은 카페 찾기</h1>
               <div className="flex items-center text-sm text-gray-600 mt-1">
                 <MapPin className="w-4 h-4 mr-1" />
                 {userLocation}
@@ -82,7 +133,15 @@ const Index = () => {
             </div>
             <div className="bg-orange-100 px-3 py-1 rounded-full">
               <span className="text-sm font-medium text-orange-800">
-                {cafes.length}개 카페 발견
+                Developed by{' '}
+                <a
+                  href="https://github.com/rumjie"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-orange-600"
+                >
+                  RUMJIE
+                </a>
               </span>
             </div>
           </div>
@@ -92,42 +151,45 @@ const Index = () => {
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="space-y-6">
-          {/* Purpose Filter */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">어떤 목적으로 방문하시나요?</h2>
-            <div className="flex flex-wrap gap-3">
-              {['공부', '업무', '미팅', '휴식', '데이트'].map((purpose) => (
-                <button
-                  key={purpose}
-                  className="px-4 py-2 bg-orange-100 hover:bg-orange-200 text-orange-800 rounded-full text-sm font-medium transition-colors"
-                >
-                  {purpose}
+        {!showSimpleList && (
+            <>
+              {/* Purpose Filter */}
+              <div className="bg-white rounded-2xl p-6 shadow-sm">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">알림: 프로토타입 페이지입니다</h2>
+              </div>
+
+              {/* Cafe List */}
+              <div className="grid grid-cols-2 gap-4">
+                {cafes.map((cafe, index) => (
+                  <div key={cafe.id} className="contents">
+                    <CafeCard
+                      cafe={cafe}
+                      onClick={() => handleCafeClick(cafe.id)}
+                      onWriteReview={() => handleWriteReview(cafe)}
+                    />
+                    {/* Ad Banner after 2nd cafe */}
+                    {index === 1 && (
+                      <div className="col-span-2">
+                        <AdBanner />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Load More Button */}
+              <div className="text-center py-6">
+                <button className="bg-white hover:bg-gray-50 text-gray-700 px-6 py-3 rounded-full border border-gray-200 font-medium transition-colors" onClick={handleRefresh}>
+                 목록 새로고침
                 </button>
-              ))}
-            </div>
-          </div>
+              </div>
+            </>
+          )}
 
-          {/* Cafe List */}
-          <div className="space-y-4">
-            {cafes.map((cafe, index) => (
-              <React.Fragment key={cafe.id}>
-                <CafeCard
-                  cafe={cafe}
-                  onClick={() => handleCafeClick(cafe.id)}
-                  onWriteReview={() => handleWriteReview(cafe)}
-                />
-                {/* Ad Banner after 2nd cafe */}
-                {index === 1 && <AdBanner />}
-              </React.Fragment>
-            ))}
-          </div>
-
-          {/* Load More Button */}
-          <div className="text-center py-6">
-            <button className="bg-white hover:bg-gray-50 text-gray-700 px-6 py-3 rounded-full border border-gray-200 font-medium transition-colors">
-              더 많은 카페 보기
-            </button>
-          </div>
+          {/* Simple Cafe List when no database results */}
+          {showSimpleList && (
+            <SimpleCafeList cafes={simpleCafes} />
+          )}
         </div>
       </div>
 
