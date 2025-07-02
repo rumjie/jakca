@@ -1,182 +1,215 @@
-
+import { supabase } from '../lib/supabase';
 import { Cafe, Review, NewReview } from '../types/cafe';
+import { calculateDistance, getCurrentPosition } from '../utils/location';
 
-// Mock data - in a real app, this would come from your database
-const mockCafes: Cafe[] = [
-  {
-    id: '1',
-    name: '스터디카페 모모',
-    address: '강남구 테헤란로 123',
-    distance: 0.2,
-    rating: 4.5,
-    reviewCount: 127,
-    images: [
-      'https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=800',
-      'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800'
-    ],
+// Transform database row to Cafe type
+const transformCafeData = (cafeRow: any, userLat?: number, userLon?: number): Cafe => {
+  const distance = userLat && userLon 
+    ? calculateDistance(userLat, userLon, cafeRow.latitude, cafeRow.longitude)
+    : 0;
+
+  return {
+    id: cafeRow.id,
+    name: cafeRow.name,
+    address: cafeRow.address,
+    distance,
+    rating: cafeRow.rating,
+    reviewCount: cafeRow.review_count,
+    images: cafeRow.images,
+    logo: cafeRow.logo,
     features: {
-      seats: 45,
-      deskHeight: 'mixed',
-      outlets: 'many',
-      wifi: 'excellent',
-      atmosphere: '조용한 공부 분위기',
-      timeLimit: '시간제한 없음',
-      recommended: true
+      seats: cafeRow.seats,
+      deskHeight: cafeRow.desk_height,
+      outlets: cafeRow.outlets,
+      wifi: cafeRow.wifi,
+      atmosphere: cafeRow.atmosphere,
+      timeLimit: cafeRow.time_limit,
+      recommended: cafeRow.recommended
     },
     hours: {
-      open: '07:00',
-      close: '23:00',
-      isOpen: true
+      open: cafeRow.open_time,
+      close: cafeRow.close_time,
+      isOpen: cafeRow.is_open
     },
-    priceRange: '음료 4,000-7,000원',
-    tags: ['공부하기좋은', '콘센트많음', '와이파이빠름', '조용함'],
-    reviews: [
-      {
-        id: '1',
-        userId: '1',
-        userName: '김공부',
-        rating: 5,
-        comment: '정말 조용하고 집중하기 좋아요. 콘센트도 충분하고 와이파이도 빨라요!',
-        date: '2024-06-15',
-        helpful: 23
-      }
-    ]
-  },
-  {
-    id: '2',
-    name: '블루보틀 강남점',
-    address: '강남구 논현로 456',
-    distance: 0.4,
-    rating: 4.2,
-    reviewCount: 89,
-    images: [
-      'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800',
-      'https://images.unsplash.com/photo-1496307653780-42ee777d4833?w=800'
-    ],
-    features: {
-      seats: 25,
-      deskHeight: 'high',
-      outlets: 'few',
-      wifi: 'good',
-      atmosphere: '세련된 분위기',
-      timeLimit: '2시간',
-      recommended: true
-    },
-    hours: {
-      open: '08:00',
-      close: '22:00',
-      isOpen: true
-    },
-    priceRange: '음료 5,000-9,000원',
-    tags: ['분위기좋음', '커피맛있음', '데이트', '인스타그램'],
-    reviews: [
-      {
-        id: '2',
-        userId: '2',
-        userName: '커피러버',
-        rating: 4,
-        comment: '커피 맛은 정말 좋은데 좌석이 좀 부족해요. 분위기는 최고!',
-        date: '2024-06-14',
-        helpful: 15
-      }
-    ]
-  },
-  {
-    id: '3',
-    name: '토즈 강남센터',
-    address: '강남구 강남대로 789',
-    distance: 0.6,
-    rating: 4.0,
-    reviewCount: 156,
-    images: [
-      'https://images.unsplash.com/photo-1500673922987-e212871fec22?w=800'
-    ],
-    features: {
-      seats: 80,
-      deskHeight: 'low',
-      outlets: 'many',
-      wifi: 'excellent',
-      atmosphere: '업무/스터디 전용',
-      timeLimit: '시간제한 없음',
-      recommended: false
-    },
-    hours: {
-      open: '06:00',
-      close: '24:00',
-      isOpen: true
-    },
-    priceRange: '시간당 2,000원',
-    tags: ['넓은공간', '콘센트많음', '24시간', '개인석'],
-    reviews: [
-      {
-        id: '3',
-        userId: '3',
-        userName: '야근족',
-        rating: 4,
-        comment: '넓고 콘센트도 많아서 좋은데, 좀 시끄러울 때가 있어요.',
-        date: '2024-06-13',
-        helpful: 8
-      }
-    ]
-  }
-];
+    priceRange: cafeRow.price_range,
+    tags: cafeRow.tags,
+    reviews: []
+  };
+};
 
-// Simple nearby cafes for when no database results are found
-const nearbyyCafes = [
-  { name: '스타벅스 강남점', address: '강남구 테헤란로 100', distance: '0.1km' },
-  { name: '투썸플레이스 역삼점', address: '강남구 역삼로 200', distance: '0.3km' },
-  { name: '커피빈 논현점', address: '강남구 논현로 300', distance: '0.4km' },
-  { name: '이디야커피 선릉점', address: '강남구 선릉로 400', distance: '0.5km' },
-  { name: '할리스커피 강남센터점', address: '강남구 강남대로 500', distance: '0.6km' }
-];
+// Transform database review row to Review type
+const transformReviewData = (reviewRow: any): Review => {
+  return {
+    id: reviewRow.id,
+    userId: reviewRow.user_id,
+    userName: reviewRow.user_name,
+    rating: reviewRow.rating,
+    comment: reviewRow.comment,
+    date: new Date(reviewRow.created_at).toISOString().split('T')[0],
+    helpful: reviewRow.helpful
+  };
+};
 
-export const getCafesNearby = async (): Promise<Cafe[]> => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // Simulate sometimes returning empty results (for testing)
-  // In a real app, this would be based on actual location and database query
-  const shouldReturnEmpty = Math.random() < 0.3; // 30% chance of empty results for demo
-  
-  if (shouldReturnEmpty) {
+export const getCafesNearby = async (radius: number = 5): Promise<Cafe[]> => {
+  try {
+    // Get user's current location
+    let userLat = 37.5017; // Default to Gangnam, Seoul
+    let userLon = 127.0269;
+    
+    try {
+      const position = await getCurrentPosition();
+      userLat = position.coords.latitude;
+      userLon = position.coords.longitude;
+    } catch (error) {
+      console.log('위치 정보를 가져올 수 없어 기본 위치를 사용합니다.');
+    }
+
+    // Fetch cafes from database
+    const { data: cafes, error } = await supabase
+      .from('cafes')
+      .select('*')
+      .order('rating', { ascending: false });
+
+    if (error) {
+      console.error('카페 데이터 조회 실패:', error);
+      return [];
+    }
+
+    if (!cafes || cafes.length === 0) {
+      return [];
+    }
+
+    // Filter cafes within radius and transform data
+    const nearbyCafes = cafes
+      .map(cafe => transformCafeData(cafe, userLat, userLon))
+      .filter(cafe => cafe.distance <= radius)
+      .sort((a, b) => a.distance - b.distance);
+
+    // Fetch reviews for each cafe
+    for (const cafe of nearbyCafes) {
+      const { data: reviews } = await supabase
+        .from('reviews')
+        .select('*')
+        .eq('cafe_id', cafe.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (reviews) {
+        cafe.reviews = reviews.map(transformReviewData);
+      }
+    }
+
+    return nearbyCafes;
+  } catch (error) {
+    console.error('카페 검색 중 오류 발생:', error);
     return [];
   }
-  
-  return mockCafes;
 };
 
 export const getNearbySimpleCafes = async () => {
-  // Simulate API call delay
+  // This function remains the same as it's used as fallback
+  const nearbyyCafes = [
+    { name: '스타벅스 강남점', address: '강남구 테헤란로 100', distance: '0.1km' },
+    { name: '투썸플레이스 역삼점', address: '강남구 역삼로 200', distance: '0.3km' },
+    { name: '커피빈 논현점', address: '강남구 논현로 300', distance: '0.4km' },
+    { name: '이디야커피 선릉점', address: '강남구 선릉로 400', distance: '0.5km' },
+    { name: '할리스커피 강남센터점', address: '강남구 강남대로 500', distance: '0.6km' }
+  ];
+  
   await new Promise(resolve => setTimeout(resolve, 500));
   return nearbyyCafes;
 };
 
 export const getCafeById = async (id: string): Promise<Cafe> => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  const cafe = mockCafes.find(c => c.id === id);
-  if (!cafe) {
-    throw new Error('Cafe not found');
+  try {
+    const { data: cafe, error } = await supabase
+      .from('cafes')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error || !cafe) {
+      throw new Error('카페를 찾을 수 없습니다');
+    }
+
+    // Get user location for distance calculation
+    let userLat = 37.5017;
+    let userLon = 127.0269;
+    
+    try {
+      const position = await getCurrentPosition();
+      userLat = position.coords.latitude;
+      userLon = position.coords.longitude;
+    } catch (error) {
+      console.log('위치 정보를 가져올 수 없어 기본 위치를 사용합니다.');
+    }
+
+    const transformedCafe = transformCafeData(cafe, userLat, userLon);
+
+    // Fetch reviews for this cafe
+    const { data: reviews } = await supabase
+      .from('reviews')
+      .select('*')
+      .eq('cafe_id', id)
+      .order('created_at', { ascending: false });
+
+    if (reviews) {
+      transformedCafe.reviews = reviews.map(transformReviewData);
+    }
+
+    return transformedCafe;
+  } catch (error) {
+    console.error('카페 상세 정보 조회 실패:', error);
+    throw error;
   }
-  return cafe;
 };
 
 export const submitReview = async (cafeId: string, review: NewReview): Promise<Review> => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  const newReview: Review = {
-    id: Date.now().toString(),
-    userId: 'current_user',
-    userName: '사용자',
-    rating: review.rating,
-    comment: review.comment,
-    date: new Date().toISOString().split('T')[0],
-    helpful: 0
-  };
+  try {
+    const { data, error } = await supabase
+      .from('reviews')
+      .insert({
+        cafe_id: cafeId,
+        user_id: 'current_user', // In real app, get from auth
+        user_name: '사용자', // In real app, get from user profile
+        rating: review.rating,
+        comment: review.comment,
+        purpose: review.purpose,
+        quietness: review.features.quietness,
+        comfort: review.features.comfort,
+        wifi: review.features.wifi,
+        outlets: review.features.outlets
+      })
+      .select()
+      .single();
 
-  // In a real app, this would save to the database
-  console.log('리뷰 저장됨:', { cafeId, review: newReview });
-  
-  return newReview;
+    if (error) {
+      throw new Error('리뷰 저장에 실패했습니다');
+    }
+
+    // Update cafe's average rating and review count
+    const { data: allReviews } = await supabase
+      .from('reviews')
+      .select('rating')
+      .eq('cafe_id', cafeId);
+
+    if (allReviews && allReviews.length > 0) {
+      const avgRating = allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length;
+      const roundedRating = Math.round(avgRating * 10) / 10;
+
+      await supabase
+        .from('cafes')
+        .update({ 
+          rating: roundedRating, 
+          review_count: allReviews.length,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', cafeId);
+    }
+
+    return transformReviewData(data);
+  } catch (error) {
+    console.error('리뷰 제출 실패:', error);
+    throw error;
+  }
 };
