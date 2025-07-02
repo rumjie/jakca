@@ -8,17 +8,17 @@ const mockCafes: Cafe[] = [
     address: '강남구 테헤란로 123',
     distance: 0.2,
     rating: 4.5,
+    reviewCount: 127,
     images: [
       'https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=800',
       'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800'
     ],
     features: {
-      seats: 45,
+      seats: 'many',
       deskHeight: 'mixed',
       outlets: 'many',
       wifi: 'excellent',
-      atmosphere: '조용한 공부 분위기',
-      timeLimit: '시간제한 없음',
+      atmosphere: ['조용한 공부 분위기', '집중하기 좋음'],
       recommended: true
     },
     hours: {
@@ -26,6 +26,7 @@ const mockCafes: Cafe[] = [
       close: '23:00',
       isOpen: true
     },
+    comments: ['정말 조용하고 집중하기 좋아요', '콘센트도 충분하고 와이파이도 빨라요!'],
     reviews: [
       {
         id: '1',
@@ -34,7 +35,20 @@ const mockCafes: Cafe[] = [
         rating: 5,
         comment: '정말 조용하고 집중하기 좋아요. 콘센트도 충분하고 와이파이도 빨라요!',
         date: '2024-06-15',
-        helpful: 23
+        helpful: 23,
+        purpose: '공부',
+        features: {
+          seats: 'many',
+          deskHeight: 'mixed',
+          outlets: 'many',
+          wifi: 'excellent'
+        },
+        atmosphere: ['조용함', '집중하기 좋음'],
+        visitDate: '2024-06-15',
+        visitTime: '오후 (14:00-18:00)',
+        stayDuration: '2-4시간',
+        priceSatisfaction: 4,
+        overallSatisfaction: 5
       }
     ]
   },
@@ -44,17 +58,17 @@ const mockCafes: Cafe[] = [
     address: '강남구 논현로 456',
     distance: 0.4,
     rating: 4.2,
+    reviewCount: 89,
     images: [
       'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800',
       'https://images.unsplash.com/photo-1496307653780-42ee777d4833?w=800'
     ],
     features: {
-      seats: 25,
+      seats: '6~10',
       deskHeight: 'high',
       outlets: 'few',
       wifi: 'good',
-      atmosphere: '세련된 분위기',
-      timeLimit: '2시간',
+      atmosphere: ['세련된 분위기', '데이트하기 좋음'],
       recommended: true
     },
     hours: {
@@ -62,6 +76,7 @@ const mockCafes: Cafe[] = [
       close: '22:00',
       isOpen: true
     },
+    comments: ['커피 맛은 정말 좋은데 좌석이 좀 부족해요', '분위기는 최고!'],
     reviews: [
       {
         id: '2',
@@ -70,7 +85,20 @@ const mockCafes: Cafe[] = [
         rating: 4,
         comment: '커피 맛은 정말 좋은데 좌석이 좀 부족해요. 분위기는 최고!',
         date: '2024-06-14',
-        helpful: 15
+        helpful: 15,
+        purpose: '데이트',
+        features: {
+          seats: '6~10',
+          deskHeight: 'high',
+          outlets: 'few',
+          wifi: 'good'
+        },
+        atmosphere: ['세련됨', '아늑함'],
+        visitDate: '2024-06-14',
+        visitTime: '저녁 (18:00-22:00)',
+        stayDuration: '1-2시간',
+        priceSatisfaction: 3,
+        overallSatisfaction: 4
       }
     ]
   },
@@ -80,16 +108,16 @@ const mockCafes: Cafe[] = [
     address: '강남구 강남대로 789',
     distance: 0.6,
     rating: 4.0,
+    reviewCount: 156,
     images: [
       'https://images.unsplash.com/photo-1500673922987-e212871fec22?w=800'
     ],
     features: {
-      seats: 80,
+      seats: 'many',
       deskHeight: 'low',
       outlets: 'many',
       wifi: 'excellent',
-      atmosphere: '업무/스터디 전용',
-      timeLimit: '시간제한 없음',
+      atmosphere: ['업무/스터디 전용', '넓은 공간'],
       recommended: false
     },
     hours: {
@@ -97,6 +125,7 @@ const mockCafes: Cafe[] = [
       close: '24:00',
       isOpen: true
     },
+    comments: ['넓고 콘센트도 많아서 좋은데', '좀 시끄러울 때가 있어요.'],
     reviews: [
       {
         id: '3',
@@ -105,7 +134,20 @@ const mockCafes: Cafe[] = [
         rating: 4,
         comment: '넓고 콘센트도 많아서 좋은데, 좀 시끄러울 때가 있어요.',
         date: '2024-06-13',
-        helpful: 8
+        helpful: 8,
+        purpose: '업무',
+        features: {
+          seats: 'many',
+          deskHeight: 'low',
+          outlets: 'many',
+          wifi: 'excellent'
+        },
+        atmosphere: ['혼잡함', '활기참'],
+        visitDate: '2024-06-13',
+        visitTime: '밤 (22:00-02:00)',
+        stayDuration: '4시간 이상',
+        priceSatisfaction: 4,
+        overallSatisfaction: 4
       }
     ]
   }
@@ -118,16 +160,16 @@ const mockCafes2: Cafe[] = [
     address: '강남구 리로드로 1',
     distance: 0.1,
     rating: 4.8,
+    reviewCount: 45,
     images: [
       'https://images.unsplash.com/photo-1519125323398-675f0ddb6308?w=800'
     ],
     features: {
-      seats: 30,
+      seats: '1~5',
       deskHeight: 'mixed',
       outlets: 'many',
       wifi: 'excellent',
-      atmosphere: '새로고침 분위기',
-      timeLimit: '없음',
+      atmosphere: ['새로고침 분위기', '깔끔함'],
       recommended: true
     },
     hours: {
@@ -135,6 +177,7 @@ const mockCafes2: Cafe[] = [
       close: '21:00',
       isOpen: true
     },
+    comments: ['새로고침하기 좋은 카페', '깔끔하고 정돈된 분위기'],
     reviews: []
   }
   // 필요하면 더 추가
@@ -172,7 +215,15 @@ export const submitReview = async (cafeId: string, review: NewReview): Promise<R
     rating: review.rating,
     comment: review.comment,
     date: new Date().toISOString().split('T')[0],
-    helpful: 0
+    helpful: 0,
+    purpose: review.purpose,
+    features: review.features,
+    atmosphere: review.atmosphere,
+    visitDate: review.visitDate,
+    visitTime: review.visitTime,
+    stayDuration: review.stayDuration,
+    priceSatisfaction: review.priceSatisfaction,
+    overallSatisfaction: review.overallSatisfaction
   };
 
   // In a real app, this would save to the database

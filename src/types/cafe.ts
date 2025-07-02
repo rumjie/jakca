@@ -4,22 +4,23 @@ export interface Cafe {
   address: string;
   distance: number;
   rating: number;
+  reviewCount: number;
   images: string[];
   logo?: string;
   features: {
-    seats: number;
+    seats: '0' | '1~5' | '6~10' | 'many';
     deskHeight: 'high' | 'low' | 'mixed';
     outlets: 'many' | 'few' | 'limited';
-    wifi: 'excellent' | 'good' | 'average';
-    atmosphere: string;
-    timeLimit: string;
     recommended: boolean;
+    wifi: 'excellent' | 'good' | 'average'|'unavailable';
+    atmosphere: string[];
   };
   hours: {
     open: string;
     close: string;
     isOpen: boolean;
   };
+  comments: string[];
   reviews: Review[];
 }
 
@@ -31,6 +32,19 @@ export interface Review {
   comment: string;
   date: string;
   helpful: number;
+  purpose: string;
+  features: {
+    seats: '0' | '1~5' | '6~10' | 'many';
+    deskHeight: 'high' | 'low' | 'mixed';
+    outlets: 'many' | 'few' | 'limited';
+    wifi: 'excellent' | 'good' | 'average' | 'unavailable';
+  };
+  atmosphere: string[];
+  visitDate: string;
+  visitTime: string;
+  stayDuration: string;
+  priceSatisfaction: number;
+  overallSatisfaction: number;
 }
 
 export interface NewReview {
@@ -38,9 +52,15 @@ export interface NewReview {
   comment: string;
   purpose: string;
   features: {
-    quietness: number;
-    comfort: number;
-    wifi: number;
-    outlets: number;
+    seats: '0' | '1~5' | '6~10' | 'many';
+    deskHeight: 'high' | 'low' | 'mixed';
+    outlets: 'many' | 'few' | 'limited';
+    wifi: 'excellent' | 'good' | 'average' | 'unavailable';
   };
+  atmosphere: string[];
+  visitDate: string;
+  visitTime: string;
+  stayDuration: string;
+  priceSatisfaction: number;
+  overallSatisfaction: number;
 }

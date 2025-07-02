@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { X, MapPin, Star, Clock, Wifi, Zap, Users, Book } from 'lucide-react';
 import { Cafe } from '../types/cafe';
@@ -30,7 +29,7 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, onWriteReview })
   const getFeatureDescription = (key: string, value: any) => {
     switch (key) {
       case 'seats':
-        return `총 ${value}개 좌석`;
+        return value === 'many' ? '좌석 많음' : value === '6~10' ? '좌석 6~10개' : value === '1~5' ? '좌석 1~5개' : '좌석 없음';
       case 'deskHeight':
         return value === 'high' ? '높은 테이블' : value === 'low' ? '낮은 테이블' : '다양한 높이';
       case 'outlets':
@@ -38,9 +37,7 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, onWriteReview })
       case 'wifi':
         return value === 'excellent' ? '와이파이 매우 빠름' : value === 'good' ? '와이파이 빠름' : '와이파이 보통';
       case 'atmosphere':
-        return value;
-      case 'timeLimit':
-        return value;
+        return Array.isArray(value) ? value.join(', ') : value;
       default:
         return value;
     }
@@ -94,11 +91,6 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, onWriteReview })
                 <span className="font-semibold text-lg">{cafe.rating}</span>
                 <span className="text-gray-600 ml-2">({cafe.reviewCount}개 리뷰)</span>
               </div>
-              {cafe.features.recommended && (
-                <span className="bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                  추천 카페
-                </span>
-              )}
             </div>
             <div className="flex items-center text-gray-600 mb-2">
               <MapPin className="w-4 h-4 mr-1" />
@@ -132,17 +124,14 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, onWriteReview })
             </div>
           </div>
 
-          {/* Tags */}
+          {/* Comments */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-3">태그</h3>
-            <div className="flex flex-wrap gap-2">
-              {cafe.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium"
-                >
-                  #{tag}
-                </span>
+            <h3 className="text-lg font-semibold mb-3">코멘트</h3>
+            <div className="space-y-2">
+              {cafe.comments.map((comment, index) => (
+                <div key={index} className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-gray-700">{comment}</p>
+                </div>
               ))}
             </div>
           </div>

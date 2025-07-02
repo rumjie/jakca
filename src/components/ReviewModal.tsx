@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { X, Star } from 'lucide-react';
 import { Cafe, NewReview } from '../types/cafe';
@@ -15,23 +14,40 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
   const [comment, setComment] = useState('');
   const [purpose, setPurpose] = useState('');
   const [features, setFeatures] = useState({
-    quietness: 0,
-    comfort: 0,
-    wifi: 0,
-    outlets: 0
+    seats: '' as '0' | '1~5' | '6~10' | 'many' | '',
+    deskHeight: '' as 'high' | 'low' | 'mixed' | '',
+    outlets: '' as 'many' | 'few' | 'limited' | '',
+    wifi: '' as 'excellent' | 'good' | 'average' | 'unavailable' | ''
   });
+  const [atmosphere, setAtmosphere] = useState<string[]>([]);
+  const [visitDate, setVisitDate] = useState('');
+  const [visitTime, setVisitTime] = useState('');
+  const [stayDuration, setStayDuration] = useState('');
+  const [priceSatisfaction, setPriceSatisfaction] = useState(0);
+  const [overallSatisfaction, setOverallSatisfaction] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleFeatureRating = (feature: keyof typeof features, value: number) => {
+  const handleFeatureChange = (feature: keyof typeof features, value: any) => {
     setFeatures(prev => ({
       ...prev,
       [feature]: value
     }));
   };
 
+  const handleAtmosphereChange = (value: string) => {
+    setAtmosphere(prev => 
+      prev.includes(value) 
+        ? prev.filter(item => item !== value)
+        : [...prev, value]
+    );
+  };
+
   const handleSubmit = async () => {
-    if (rating === 0 || !comment.trim()) {
-      alert('평점과 리뷰를 모두 작성해주세요.');
+    if (rating === 0 || !comment.trim() || !purpose || !visitDate || !visitTime || !stayDuration || 
+        priceSatisfaction === 0 || overallSatisfaction === 0 ||
+        !features.seats || !features.deskHeight || !features.outlets || !features.wifi ||
+        atmosphere.length === 0) {
+      alert('모든 필수 항목을 작성해주세요.');
       return;
     }
 
@@ -41,7 +57,18 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
         rating,
         comment: comment.trim(),
         purpose,
-        features
+        features: {
+          seats: features.seats as '0' | '1~5' | '6~10' | 'many',
+          deskHeight: features.deskHeight as 'high' | 'low' | 'mixed',
+          outlets: features.outlets as 'many' | 'few' | 'limited',
+          wifi: features.wifi as 'excellent' | 'good' | 'average' | 'unavailable'
+        },
+        atmosphere,
+        visitDate,
+        visitTime,
+        stayDuration,
+        priceSatisfaction,
+        overallSatisfaction
       };
 
       await submitReview(cafe.id, review);
@@ -106,7 +133,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
               방문 목적
             </label>
             <div className="flex flex-wrap gap-2">
-              {['공부', '업무', '미팅', '휴식', '데이트'].map((p) => (
+              {['공부', '업무', '미팅', '휴식', '기타'].map((p) => (
                 <button
                   key={p}
                   onClick={() => setPurpose(p)}
@@ -125,29 +152,179 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
           {/* Feature Ratings */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-3">
-              세부 평가
+              카페 정보 평가
+            </label>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs text-gray-600 mb-2">좌석 수 *</label>
+                <div className="flex flex-wrap gap-2">
+                  {['0', '1~5', '6~10', 'many'].map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => handleFeatureChange('seats', option)}
+                      className={`px-3 py-2 rounded-full text-sm font-medium transition-colors ${
+                        features.seats === option
+                          ? 'bg-orange-500 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {option === 'many' ? '많음' : option}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs text-gray-600 mb-2">책상 높이 *</label>
+                <div className="flex flex-wrap gap-2">
+                  {['high', 'low', 'mixed'].map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => handleFeatureChange('deskHeight', option)}
+                      className={`px-3 py-2 rounded-full text-sm font-medium transition-colors ${
+                        features.deskHeight === option
+                          ? 'bg-orange-500 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {option === 'high' ? '높음' : option === 'low' ? '낮음' : '혼합'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs text-gray-600 mb-2">콘센트 *</label>
+                <div className="flex flex-wrap gap-2">
+                  {['many', 'few', 'limited'].map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => handleFeatureChange('outlets', option)}
+                      className={`px-3 py-2 rounded-full text-sm font-medium transition-colors ${
+                        features.outlets === option
+                          ? 'bg-orange-500 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {option === 'many' ? '많음' : option === 'few' ? '보통' : '부족'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs text-gray-600 mb-2">와이파이 *</label>
+                <div className="flex flex-wrap gap-2">
+                  {['excellent', 'good', 'average', 'unavailable'].map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => handleFeatureChange('wifi', option)}
+                      className={`px-3 py-2 rounded-full text-sm font-medium transition-colors ${
+                        features.wifi === option
+                          ? 'bg-orange-500 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {option === 'excellent' ? '매우 빠름' : option === 'good' ? '빠름' : option === 'average' ? '보통' : '없음'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Atmosphere */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              분위기 (복수 선택 가능) *
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {['조용함', '시끄러움', '세련됨', '아늑함', '깔끔함', '혼잡함', '여유로움', '활기참', '차분함', '모던함'].map((option) => (
+                <button
+                  key={option}
+                  onClick={() => handleAtmosphereChange(option)}
+                  className={`px-3 py-2 rounded-full text-sm font-medium transition-colors ${
+                    atmosphere.includes(option)
+                      ? 'bg-orange-500 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Visit Information */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              방문 정보
+            </label>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-gray-600 mb-1">방문 날짜 *</label>
+                <input
+                  type="date"
+                  value={visitDate}
+                  onChange={(e) => setVisitDate(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-600 mb-1">방문 시간 *</label>
+                <select
+                  value={visitTime}
+                  onChange={(e) => setVisitTime(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                >
+                  <option value="">시간 선택</option>
+                  <option value="아침 (06:00-10:00)">아침 (06:00-10:00)</option>
+                  <option value="점심 (10:00-14:00)">점심 (10:00-14:00)</option>
+                  <option value="오후 (14:00-18:00)">오후 (14:00-18:00)</option>
+                  <option value="저녁 (18:00-22:00)">저녁 (18:00-22:00)</option>
+                  <option value="밤 (22:00-02:00)">밤 (22:00-02:00)</option>
+                </select>
+              </div>
+            </div>
+            <div className="mt-4">
+              <label className="block text-xs text-gray-600 mb-1">체류 시간 *</label>
+              <select
+                value={stayDuration}
+                onChange={(e) => setStayDuration(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              >
+                <option value="">시간 선택</option>
+                <option value="30분 이하">30분 이하</option>
+                <option value="30분-1시간">30분-1시간</option>
+                <option value="1-2시간">1-2시간</option>
+                <option value="2-4시간">2-4시간</option>
+                <option value="4시간 이상">4시간 이상</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Satisfaction Ratings */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              만족도 평가
             </label>
             <div className="space-y-4">
               {[
-                { key: 'quietness', label: '조용함' },
-                { key: 'comfort', label: '편안함' },
-                { key: 'wifi', label: '와이파이' },
-                { key: 'outlets', label: '콘센트' }
-              ].map(({ key, label }) => (
+                { key: 'priceSatisfaction', label: '가격 만족도', setter: setPriceSatisfaction, value: priceSatisfaction },
+                { key: 'overallSatisfaction', label: '전체 만족도', setter: setOverallSatisfaction, value: overallSatisfaction }
+              ].map(({ key, label, setter, value }) => (
                 <div key={key} className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700">{label}</span>
+                  <span className="text-sm text-gray-700">{label} *</span>
                   <div className="flex items-center gap-1">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button
                         key={star}
-                        onClick={() => handleFeatureRating(key as keyof typeof features, star)}
+                        onClick={() => setter(star)}
                         className="p-0.5"
                       >
                         <Star
                           className={`w-5 h-5 ${
-                            star <= features[key as keyof typeof features]
-                              ? 'text-yellow-400 fill-current'
-                              : 'text-gray-300'
+                            star <= value ? 'text-yellow-400 fill-current' : 'text-gray-300'
                           }`}
                         />
                       </button>
@@ -177,7 +354,10 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
           {/* Submit Button */}
           <button
             onClick={handleSubmit}
-            disabled={isSubmitting || rating === 0 || !comment.trim()}
+            disabled={isSubmitting || rating === 0 || !comment.trim() || !purpose || !visitDate || !visitTime || !stayDuration || 
+                     priceSatisfaction === 0 || overallSatisfaction === 0 ||
+                     !features.seats || !features.deskHeight || !features.outlets || !features.wifi ||
+                     atmosphere.length === 0}
             className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 text-white py-3 px-4 rounded-xl font-medium transition-colors"
           >
             {isSubmitting ? '제출 중...' : '리뷰 제출하기'}

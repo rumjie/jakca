@@ -30,7 +30,7 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe, onClick, onWriteReview, isFro
       case 'wifi':
         return value === 'excellent' ? '와이파이 빠름' : value === 'good' ? '와이파이 보통' : '와이파이 느림';
       case 'seats':
-        return `좌석 ${value}개`;
+        return value === 'many' ? '많음' : value === '6~10' ? '6~10개' : value === '1~5' ? '1~5개' : '없음';
       default:
         return value;
     }
@@ -52,11 +52,7 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe, onClick, onWriteReview, isFro
             </span>
           </div>
           <div className="absolute top-4 right-4">
-            {isFromDatabase && cafe.features.recommended && (
-              <span className="bg-orange-500 text-white px-2 py-1 rounded-full text-sm font-medium">
-                추천
-              </span>
-            )}
+            {/* recommended 필드 삭제됨 */}
           </div>
         </div>
 
