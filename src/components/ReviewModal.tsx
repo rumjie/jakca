@@ -15,14 +15,14 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
   const [comment, setComment] = useState('');
   const [purpose, setPurpose] = useState('');
   const [features, setFeatures] = useState({
-    quietness: 0,
-    comfort: 0,
-    wifi: 0,
-    outlets: 0
+    quietness: '' as '좋음' | '보통' | '아쉬움' | '',
+    comfort: '' as '편함' | '보통' | '불편함' | '',
+    wifi: '' as '있음' | '없음' | '',
+    outlets: '' as '있음' | '없음' | ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleFeatureRating = (feature: keyof typeof features, value: number) => {
+  const handleFeatureSelect = (feature: keyof typeof features, value: any) => {
     setFeatures(prev => ({
       ...prev,
       [feature]: value
@@ -41,7 +41,12 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
         rating,
         comment: comment.trim(),
         purpose,
-        features
+        features: {
+          quietness: features.quietness || '보통',
+          comfort: features.comfort || '보통',
+          wifi: features.wifi || '없음',
+          outlets: features.outlets || '없음'
+        }
       };
 
       await submitReview(cafe.id, review);
@@ -128,33 +133,85 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
               세부 평가
             </label>
             <div className="space-y-4">
-              {[
-                { key: 'quietness', label: '조용함' },
-                { key: 'comfort', label: '편안함' },
-                { key: 'wifi', label: '와이파이' },
-                { key: 'outlets', label: '콘센트' }
-              ].map(({ key, label }) => (
-                <div key={key} className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700">{label}</span>
-                  <div className="flex items-center gap-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        onClick={() => handleFeatureRating(key as keyof typeof features, star)}
-                        className="p-0.5"
-                      >
-                        <Star
-                          className={`w-5 h-5 ${
-                            star <= features[key as keyof typeof features]
-                              ? 'text-yellow-400 fill-current'
-                              : 'text-gray-300'
-                          }`}
-                        />
-                      </button>
-                    ))}
-                  </div>
+              {/* Quietness */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-700">조용함</span>
+                <div className="flex gap-2">
+                  {['좋음', '보통', '아쉬움'].map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => handleFeatureSelect('quietness', option)}
+                      className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                        features.quietness === option
+                          ? 'bg-orange-500 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
                 </div>
-              ))}
+              </div>
+
+              {/* Comfort */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-700">편안함</span>
+                <div className="flex gap-2">
+                  {['편함', '보통', '불편함'].map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => handleFeatureSelect('comfort', option)}
+                      className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                        features.comfort === option
+                          ? 'bg-orange-500 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* WiFi */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-700">와이파이</span>
+                <div className="flex gap-2">
+                  {['있음', '없음'].map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => handleFeatureSelect('wifi', option)}
+                      className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                        features.wifi === option
+                          ? 'bg-orange-500 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Outlets */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-700">콘센트</span>
+                <div className="flex gap-2">
+                  {['있음', '없음'].map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => handleFeatureSelect('outlets', option)}
+                      className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                        features.outlets === option
+                          ? 'bg-orange-500 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 

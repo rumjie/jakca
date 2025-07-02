@@ -42,9 +42,9 @@ export interface NewReview {
   comment: string;
   purpose: string;
   features: {
-    quietness: number;
-    comfort: number;
-    wifi: number;
-    outlets: number;
+    quietness: '좋음' | '보통' | '아쉬움';
+    comfort: '편함' | '보통' | '불편함';
+    wifi: '있음' | '없음';
+    outlets: '있음' | '없음';
   };
 }
