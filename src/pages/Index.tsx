@@ -5,18 +5,22 @@ import CafeDetail from '../components/CafeDetail';
 import ReviewModal from '../components/ReviewModal';
 import AdBanner from '../components/AdBanner';
 // import { getCafesNearby, getCafeById } from '../services/cafeService';
-import SimpleCafeList from '../components/SimpleCafeList';
-import { getCafesNearby, getCafeById, getCafesNearby2 } from '../services/cafeService';
+import NoneCafeList from '../components/NoneCafeList';
+import { getCafesNearby, getCafeById, getNearbyCafes } from '../services/cafeService';
 import { Cafe } from '../types/cafe';
+// import { SimpleCafe } from '../types/simpleCafe';
 
 const Index = () => {
   const [cafes, setCafes] = useState<Cafe[]>([]);
-  const [simpleCafes, setSimpleCafes] = useState<any[]>([]);
   const [selectedCafe, setSelectedCafe] = useState<Cafe | null>(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState<string>('현재 위치');
   const [showSimpleList, setShowSimpleList] = useState(false);
+
+  // getDistanceFromLatLonInKm, simpleCafeToCafe 임시 함수 추가
+  function getDistanceFromLatLonInKm() { return 0; }
+
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -66,23 +70,27 @@ const Index = () => {
     }
   }, []);
 
-  const loadCafes = async () => {
+  const loadCafes = async (userLat?: number, userLng?: number) => {
     try {
       setLoading(true);
-      const nearbyeCafes = await getCafesNearby();
-      // setCafes(nearbyeCafes);
-            
-      if (nearbyeCafes.length === 0) {
-        // No cafes found in database, show simple list
-        setShowSimpleList(true);
-        const simpleCafeList = await getNearbySimpleCafes();
-        setSimpleCafes(simpleCafeList);
+      let cafesWithDistance: Cafe[] = [];
+      if (userLat !== undefined && userLng !== undefined) {
+        cafesWithDistance = await getNearbyCafes(userLat, userLng);
       } else {
-        setCafes(nearbyeCafes);
+        // 위치 정보 없으면 fallback (임시)
+        cafesWithDistance = await getCafesNearby2();
+      }
+      if (cafesWithDistance.length === 0) {
+        setShowSimpleList(true);
+        setCafes([]);
+      } else {
+        setCafes(cafesWithDistance);
         setShowSimpleList(false);
       }
     } catch (error) {
       console.error('카페 데이터 로딩 실패:', error);
+      setShowSimpleList(true);
+      setCafes([]);
     } finally {
       setLoading(false);
     }

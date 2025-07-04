@@ -7,6 +7,9 @@ export interface Cafe {
   reviewCount: number;
   images: string[];
   logo?: string;
+  lat?: number;
+  lng?: number;
+  place_url?: string;
   features: {
     seats: '0' | '1~5' | '6~10' | 'many';
     deskHeight: 'high' | 'low' | 'mixed';
