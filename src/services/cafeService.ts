@@ -15,6 +15,7 @@ export const getCafesNearby = async (): Promise<Cafe[]> => {
     .select('*')
     .limit(4);
   if (error) throw error;
+  console.log('DB에서 받아온 카페 데이터:', data);
   return data as Cafe[];
 };
 

@@ -77,8 +77,7 @@ const Index = () => {
       if (userLat !== undefined && userLng !== undefined) {
         cafesWithDistance = await getNearbyCafes(userLat, userLng);
       } else {
-        // 위치 정보 없으면 fallback (임시)
-        cafesWithDistance = await getCafesNearby2();
+        cafesWithDistance = await getCafesNearby();
       }
       if (cafesWithDistance.length === 0) {
         setShowSimpleList(true);
@@ -110,14 +109,13 @@ const Index = () => {
     setShowReviewModal(true);
   };
 
-  // 목록 새로고침 기능 주석 처리
-  // const handleRefresh = async () => {
-  //   setLoading(true);
-  //   const newCafes = await getCafesNearby2();
-  //   setCafes(newCafes);
-  //   setLoading(false);
-  //   // window.location.reload();
-  // };
+  const handleRefresh = async () => {
+    setLoading(true);
+    const newCafes = await getCafesNearby();
+    setCafes(newCafes);
+    setLoading(false);
+    // window.location.reload();
+  };
 
   const handleNoneCafeWriteReview = (cafe: Cafe) => {
     setSelectedCafe(cafe);
