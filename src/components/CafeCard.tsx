@@ -24,6 +24,11 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe, onClick, onWriteReview, isFro
   };
 
   const getFeatureText = (key: string, value: any) => {
+    // value가 객체인 경우 처리
+    if (typeof value === 'object' && value !== null) {
+      return '정보 없음';
+    }
+    
     switch (key) {
       case 'outlets':
         return value === 'many' ? '콘센트 충분' : value === 'few' ? '콘센트 보통' : '콘센트 부족';
@@ -32,7 +37,7 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe, onClick, onWriteReview, isFro
       case 'seats':
         return value === 'many' ? '많음' : value === '6~10' ? '6~10개' : value === '1~5' ? '1~5개' : '없음';
       default:
-        return value;
+        return String(value); // 문자열로 변환
     }
   };
 
@@ -40,12 +45,18 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe, onClick, onWriteReview, isFro
     <div className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer group">
       <div onClick={onClick}>
         {/* Image Section */}
-        <div className="relative h-48 overflow-hidden">
-          <img
-            src={cafe.images[0]}
-            alt={cafe.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
+        <div className="relative h-48 overflow-hidden flex items-center justify-center bg-gray-100">
+          {cafe.images && cafe.images.length > 0 && cafe.images[0] ? (
+            <img
+              src={cafe.images[0]}
+              alt={cafe.name}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+          ) : (
+            <span className="text-5xl font-bold text-gray-400">
+              {cafe.name ? cafe.name[0] : "?"}
+            </span>
+          )}
           <div className="absolute top-4 left-4">
             <span className="bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-sm font-medium text-gray-700">
               {cafe.distance}km
@@ -77,15 +88,20 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe, onClick, onWriteReview, isFro
 
           {/* Features */}
           <div className="flex flex-wrap gap-2 mb-4">
-            {Object.entries(cafe.features).slice(0, 3).map(([key, value]) => (
-              <div
-                key={key}
-                className="flex items-center bg-gray-100 px-3 py-1 rounded-full text-sm text-gray-700"
-              >
-                {getFeatureIcon(key)}
-                <span className="ml-1">{getFeatureText(key, value)}</span>
-              </div>
-            ))}
+            {cafe.features && typeof cafe.features === 'object' && 
+              Object.entries(cafe.features)
+                .filter(([key, value]) => typeof value !== 'object' && value !== null)
+                .slice(0, 3)
+                .map(([key, value]) => (
+                  <div
+                    key={key}
+                    className="flex items-center bg-gray-100 px-3 py-1 rounded-full text-sm text-gray-700"
+                  >
+                    {getFeatureIcon(key)}
+                    <span className="ml-1">{getFeatureText(key, value)}</span>
+                  </div>
+                ))
+            }
           </div>
 
           {/* Hours */}

@@ -50,11 +50,12 @@ export interface Review {
 export interface NewReview {
   rating: number;
   comment: string;
+  // date : 리뷰 넣을때 생성됨
   purpose: string;
   features: {
     seats: '0' | '1~5' | '6~10' | 'many';
     deskHeight: 'high' | 'low' | 'mixed';
-    outlets: 'many' | 'few' | 'limited';
+    outlets: 'many' | 'few' | 'limited'; // 콘센트
     wifi: 'excellent' | 'good' | 'average' | 'unavailable';
   };
   atmosphere: string[];

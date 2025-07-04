@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Star } from 'lucide-react';
 import { Cafe, NewReview } from '../types/cafe';
-import { submitReview } from '../services/cafeService';
+import { submitReviewWithCafeCheck } from '../services/cafeService';
 
 interface ReviewModalProps {
   cafe: Cafe;
@@ -26,6 +26,15 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
   const [priceSatisfaction, setPriceSatisfaction] = useState(0);
   const [overallSatisfaction, setOverallSatisfaction] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    setVisitDate(`${yyyy}-${mm}-${dd}`);
+    setVisitTime(String(now.getHours()).padStart(2, '0'));
+  }, []);
 
   const handleFeatureChange = (feature: keyof typeof features, value: any) => {
     setFeatures(prev => ({
@@ -71,7 +80,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
         overallSatisfaction
       };
 
-      await submitReview(cafe.id, review);
+      await submitReviewWithCafeCheck(cafe, review);
       onSubmit(review);
     } catch (error) {
       console.error('리뷰 제출 실패:', error);
@@ -239,7 +248,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
               분위기 (복수 선택 가능) *
             </label>
             <div className="flex flex-wrap gap-2">
-              {['조용함', '시끄러움', '세련됨', '아늑함', '깔끔함', '혼잡함', '여유로움', '활기참', '차분함', '모던함'].map((option) => (
+              {['조용함', '시끄러움', '감성', '아늑함', '깔끔함', '혼잡함', '밝음', '어두움','식물'].map((option) => (
                 <button
                   key={option}
                   onClick={() => handleAtmosphereChange(option)}
@@ -277,12 +286,11 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
                   onChange={(e) => setVisitTime(e.target.value)}
                   className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 >
-                  <option value="">시간 선택</option>
-                  <option value="아침 (06:00-10:00)">아침 (06:00-10:00)</option>
-                  <option value="점심 (10:00-14:00)">점심 (10:00-14:00)</option>
-                  <option value="오후 (14:00-18:00)">오후 (14:00-18:00)</option>
-                  <option value="저녁 (18:00-22:00)">저녁 (18:00-22:00)</option>
-                  <option value="밤 (22:00-02:00)">밤 (22:00-02:00)</option>
+                  {Array.from({ length: 24 }, (_, i) => (
+                    <option key={i} value={String(i).padStart(2, '0')}>
+                      {String(i).padStart(2, '0')}시
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>

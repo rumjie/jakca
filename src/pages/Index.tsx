@@ -102,12 +102,18 @@ const Index = () => {
     setShowReviewModal(true);
   };
 
-  const handleRefresh = async () => {
-    setLoading(true);
-    const newCafes = await getCafesNearby2();
-    setCafes(newCafes);
-    setLoading(false);
-    // window.location.reload();
+  // 목록 새로고침 기능 주석 처리
+  // const handleRefresh = async () => {
+  //   setLoading(true);
+  //   const newCafes = await getCafesNearby2();
+  //   setCafes(newCafes);
+  //   setLoading(false);
+  //   // window.location.reload();
+  // };
+
+  const handleNoneCafeWriteReview = (cafe: Cafe) => {
+    setSelectedCafe(cafe);
+    setShowReviewModal(true);
   };
 
   if (loading) {
@@ -117,6 +123,10 @@ const Index = () => {
       </div>
     );
   }
+
+  const filteredCafes = cafes.filter(
+    cafe => typeof cafe.rating === 'number' && cafe.rating >= 3
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50">
@@ -151,30 +161,35 @@ const Index = () => {
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="space-y-6">
-        {!showSimpleList && (
-            <>
-              {/* Purpose Filter */}
-              <div className="bg-white rounded-2xl p-6 shadow-sm">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">알림: 프로토타입 페이지입니다</h2>
-              </div>
+          {/* 알림: 항상 표시 */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">알림: 프로토타입 페이지입니다</h2>
+          </div>
 
+          {/* 카페 리스트 or NoneCafeList */}
+          {!showSimpleList ? (
+            <>
               {/* Cafe List */}
               <div className="grid grid-cols-2 gap-4">
-                {cafes.map((cafe, index) => (
-                  <div key={cafe.id} className="contents">
-                    <CafeCard
-                      cafe={cafe}
-                      onClick={() => handleCafeClick(cafe.id)}
-                      onWriteReview={() => handleWriteReview(cafe)}
-                    />
-                    {/* Ad Banner after 2nd cafe */}
-                    {index === 1 && (
-                      <div className="col-span-2">
-                        <AdBanner />
-                      </div>
-                    )}
-                  </div>
-                ))}
+                {filteredCafes.length > 0 ? (
+                  filteredCafes.map((cafe, index) => (
+                    <div key={cafe.id} className="contents">
+                      <CafeCard
+                        cafe={cafe}
+                        onClick={() => handleCafeClick(cafe.id)}
+                        onWriteReview={() => handleWriteReview(cafe)}
+                      />
+                      {/* Ad Banner after 2nd cafe */}
+                      {index === 1 && (
+                        <div className="col-span-2">
+                          <AdBanner />
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <NoneCafeList onWriteReview={handleNoneCafeWriteReview} />
+                )}
               </div>
 
               {/* Load More Button */}
@@ -184,11 +199,8 @@ const Index = () => {
                 </button>
               </div>
             </>
-          )}
-
-          {/* Simple Cafe List when no database results */}
-          {showSimpleList && (
-            <SimpleCafeList cafes={simpleCafes} />
+          ) : (
+            <NoneCafeList onWriteReview={handleNoneCafeWriteReview} />
           )}
         </div>
       </div>
@@ -211,10 +223,8 @@ const Index = () => {
             setSelectedCafe(null);
           }}
           onSubmit={(review) => {
-            console.log('새 리뷰 저장됨:', review);
             setShowReviewModal(false);
             setSelectedCafe(null);
-            // Here you would typically refresh the cafe data
             loadCafes();
           }}
         />
