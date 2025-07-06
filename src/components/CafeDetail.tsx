@@ -11,6 +11,20 @@ interface CafeDetailProps {
 const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, onWriteReview }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+  // ESC 키로 모달 닫기
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose]);
+
   const getFeatureIcon = (key: string) => {
     switch (key) {
       case 'seats':
