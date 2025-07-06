@@ -4,18 +4,19 @@ export interface Cafe {
   address: string;
   distance: number;
   rating: number;
-  reviewCount: number;
+  review_count: number;
   images: string[];
   logo?: string;
   lat?: number;
   lng?: number;
   place_url?: string;
+  isFromDatabase?: boolean;
   features: {
     seats: '0' | '1~5' | '6~10' | 'many';
-    deskHeight: 'high' | 'low' | 'mixed';
+    deskHeight: 'high' | 'low' | 'mixed' | 'normal';
     outlets: 'many' | 'few' | 'limited';
     recommended: boolean;
-    wifi: 'excellent' | 'good' | 'average'|'unavailable';
+    wifi: 'good' | 'average' | 'slow' | 'unavailable';
     atmosphere: string[];
   };
   hours: {

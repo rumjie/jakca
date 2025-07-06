@@ -4,7 +4,7 @@ import CafeCard from '../components/CafeCard';
 import CafeDetail from '../components/CafeDetail';
 import ReviewModal from '../components/ReviewModal';
 import AdBanner from '../components/AdBanner';
-// import { getCafesNearby, getCafeById } from '../services/cafeService';
+// import { getCafesNearby,   } from '../services/cafeService';
 import NoneCafeList from '../components/NoneCafeList';
 import { getCafesNearby, getCafeById, getNearbyCafes } from '../services/cafeService';
 import { Cafe } from '../types/cafe';
@@ -15,7 +15,7 @@ const Index = () => {
   const [selectedCafe, setSelectedCafe] = useState<Cafe | null>(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [userLocation, setUserLocation] = useState<string>('현재 위치');
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
   const [showSimpleList, setShowSimpleList] = useState(false);
 
   // getDistanceFromLatLonInKm, simpleCafeToCafe 임시 함수 추가
@@ -26,7 +26,7 @@ const Index = () => {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
-          // console.log('위치 정보:', latitude, longitude);
+          console.log('위치 정보:', latitude, longitude);
           const KAKAO_API_KEY = import.meta.env.VITE_KAKAO_REST_API_KEY;
           try {
             const response = await fetch(
@@ -38,34 +38,79 @@ const Index = () => {
               }
             );
             const data = await response.json();
+            // console.log('카카오 API 응답:', data); // 디버깅용
 
             let address = '내 위치';
             if (data.documents && data.documents.length > 0) {
-              const addrObj = data.documents[0].address;
-              if (addrObj) {
-                address = `${addrObj.region_2depth_name} ${addrObj.region_3depth_name}`;
-              } else {
-                // fallback: address_name에서 구, 동만 추출
-                const fullAddress = data.documents[0].address?.address_name || '내 위치';
-                const arr = fullAddress.split(' ');
-                address = arr.length >= 3 ? `${arr[1]} ${arr[2]}` : fullAddress;
+              const document = data.documents[0];
+              
+              // address 객체가 있는 경우
+              if (document.address) {
+                const addrObj = document.address;
+                if (addrObj.region_2depth_name && addrObj.region_3depth_name) {
+                  address = `${addrObj.region_2depth_name} ${addrObj.region_3depth_name}`;
+                } else if (addrObj.address_name) {
+                  // address_name에서 구, 동 추출
+                  const addrParts = addrObj.address_name.split(' ');
+                  if (addrParts.length >= 3) {
+                    address = `${addrParts[1]} ${addrParts[2]}`;
+                  } else {
+                    address = addrObj.address_name;
+                  }
+                }
+              }
+              // road_address 객체가 있는 경우 (도로명 주소)
+              else if (document.road_address) {
+                const roadAddr = document.road_address;
+                if (roadAddr.region_2depth_name && roadAddr.region_3depth_name) {
+                  address = `${roadAddr.region_2depth_name} ${roadAddr.region_3depth_name}`;
+                } else if (roadAddr.address_name) {
+                  const addrParts = roadAddr.address_name.split(' ');
+                  if (addrParts.length >= 3) {
+                    address = `${addrParts[1]} ${addrParts[2]}`;
+                  } else {
+                    address = roadAddr.address_name;
+                  }
+                }
               }
             }
-            setUserLocation(address);
+            setUserLocation({ lat: latitude, lng: longitude, address });
           } catch (e) {
             console.error('카카오 역지오코딩 실패:', e);
-            setUserLocation('내 위치');
+            setUserLocation(null);
           }
-          loadCafes();
+          loadCafes(latitude, longitude);
         },
         (error) => {
           console.error('위치 정보 에러:', error);
-          setUserLocation('위치 정보 없음');
-          loadCafes();
+          
+          // 에러 코드별 메시지
+          let errorMessage = '위치 정보를 가져올 수 없습니다';
+          switch (error.code) {
+            case 1:
+              errorMessage = '위치 정보 접근이 거부되었습니다';
+              break;
+            case 2:
+              errorMessage = '위치 정보를 사용할 수 없습니다';
+              break;
+            case 3:
+              errorMessage = '위치 정보 요청 시간이 초과되었습니다';
+              break;
+          }
+          
+          // 기본 위치로 설정 (서울 시청)
+          const defaultLocation = {
+            lat: 37.5665,
+            lng: 126.9780,
+            address: '서울 중구'
+          };
+          
+          setUserLocation(defaultLocation);
+          loadCafes(defaultLocation.lat, defaultLocation.lng);
         }
       );
     } else {
-      setUserLocation('위치 정보 없음');
+      setUserLocation(null);
       loadCafes();
     }
   }, []);
@@ -77,7 +122,7 @@ const Index = () => {
       if (userLat !== undefined && userLng !== undefined) {
         cafesWithDistance = await getNearbyCafes(userLat, userLng);
       } else {
-        cafesWithDistance = await getCafesNearby();
+        cafesWithDistance = await getCafesNearby(userLat, userLng);
       }
       if (cafesWithDistance.length === 0) {
         setShowSimpleList(true);
@@ -97,6 +142,14 @@ const Index = () => {
 
   const handleCafeClick = async (cafeId: string) => {
     try {
+      // 먼저 현재 리스트에서 카페 찾기
+      const cafeFromList = cafes.find(cafe => cafe.id === cafeId);
+      if (cafeFromList) {
+        setSelectedCafe(cafeFromList);
+        return;
+      }
+      
+      // 리스트에 없으면 DB에서 찾기
       const cafe = await getCafeById(cafeId);
       setSelectedCafe(cafe);
     } catch (error) {
@@ -111,7 +164,7 @@ const Index = () => {
 
   const handleRefresh = async () => {
     setLoading(true);
-    const newCafes = await getCafesNearby();
+    const newCafes = await getCafesNearby(userLocation?.lat, userLocation?.lng);
     setCafes(newCafes);
     setLoading(false);
     // window.location.reload();
@@ -131,8 +184,16 @@ const Index = () => {
   }
 
   const filteredCafes = cafes.filter(
-    cafe => typeof cafe.rating === 'number' && cafe.rating >= 3
-  );
+    cafe => {
+      // DB에서 온 카페는 rating 3 이상만 표시
+      if (cafe.isFromDatabase) {
+        return typeof cafe.rating === 'number' && cafe.rating >= 3;
+      }
+      // 프랜차이즈나 카카오 API 카페는 모두 표시
+      return true;
+    }
+  ).slice(0, 4); // 최대 4개만 표시
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50">
@@ -144,7 +205,7 @@ const Index = () => {
               <h1 className="text-2xl font-bold text-gray-900">JAKCA - 작업하기 좋은 카페 찾기</h1>
               <div className="flex items-center text-sm text-gray-600 mt-1">
                 <MapPin className="w-4 h-4 mr-1" />
-                {userLocation}
+                {userLocation?.address}
               </div>
             </div>
             <div className="bg-orange-100 px-3 py-1 rounded-full">
@@ -184,6 +245,7 @@ const Index = () => {
                         cafe={cafe}
                         onClick={() => handleCafeClick(cafe.id)}
                         onWriteReview={() => handleWriteReview(cafe)}
+                        isFromDatabase={cafe.isFromDatabase}
                       />
                       {/* Ad Banner after 2nd cafe */}
                       {index === 1 && (

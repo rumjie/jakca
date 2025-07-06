@@ -17,7 +17,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
     seats: '' as '0' | '1~5' | '6~10' | 'many' | '',
     deskHeight: '' as 'high' | 'low' | 'mixed' | '',
     outlets: '' as 'many' | 'few' | 'limited' | '',
-    wifi: '' as 'excellent' | 'good' | 'average' | 'unavailable' | ''
+    wifi: '' as 'good' | 'average' | 'slow' | 'unavailable' | ''
   });
   const [atmosphere, setAtmosphere] = useState<string[]>([]);
   const [visitDate, setVisitDate] = useState('');
@@ -70,7 +70,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
           seats: features.seats as '0' | '1~5' | '6~10' | 'many',
           deskHeight: features.deskHeight as 'high' | 'low' | 'mixed',
           outlets: features.outlets as 'many' | 'few' | 'limited',
-          wifi: features.wifi as 'excellent' | 'good' | 'average' | 'unavailable'
+          wifi: features.wifi as 'good' | 'average' | 'slow' | 'unavailable'
         },
         atmosphere,
         visitDate,
@@ -186,7 +186,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
               <div>
                 <label className="block text-xs text-gray-600 mb-2">책상 높이 *</label>
                 <div className="flex flex-wrap gap-2">
-                  {['high', 'low', 'mixed'].map((option) => (
+                  {['high', 'low', 'normal', 'mixed'].map((option) => (
                     <button
                       key={option}
                       onClick={() => handleFeatureChange('deskHeight', option)}
@@ -196,7 +196,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
                     >
-                      {option === 'high' ? '높음' : option === 'low' ? '낮음' : '혼합'}
+                      {option === 'high' ? '높음' : option === 'low' ? '낮음' : option === 'normal' ? '보통' : '혼합'}
                     </button>
                   ))}
                 </div>
@@ -224,7 +224,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
               <div>
                 <label className="block text-xs text-gray-600 mb-2">와이파이 *</label>
                 <div className="flex flex-wrap gap-2">
-                  {['excellent', 'good', 'average', 'unavailable'].map((option) => (
+                  {['good', 'average', 'slow', 'unavailable'].map((option) => (
                     <button
                       key={option}
                       onClick={() => handleFeatureChange('wifi', option)}
@@ -234,7 +234,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
                     >
-                      {option === 'excellent' ? '매우 빠름' : option === 'good' ? '빠름' : option === 'average' ? '보통' : '없음'}
+                      {option === 'good' ? '빠름' : option === 'average' ? '보통' : option === 'slow' ? '느림' : '없음'}
                     </button>
                   ))}
                 </div>
@@ -319,7 +319,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
             <div className="space-y-4">
               {[
                 { key: 'priceSatisfaction', label: '가격 만족도', setter: setPriceSatisfaction, value: priceSatisfaction },
-                { key: 'overallSatisfaction', label: '전체 만족도', setter: setOverallSatisfaction, value: overallSatisfaction }
+                { key: 'overallSatisfaction', label: '시설 만족도', setter: setOverallSatisfaction, value: overallSatisfaction }
               ].map(({ key, label, setter, value }) => (
                 <div key={key} className="flex items-center justify-between">
                   <span className="text-sm text-gray-700">{label} *</span>

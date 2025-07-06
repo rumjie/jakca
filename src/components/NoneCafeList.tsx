@@ -1,20 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { MapPin } from 'lucide-react';
-
-interface SimpleCafe {
-  name: string;
-  address: string;
-  distance: string;
-}
+import { Cafe } from '../types/cafe';
 
 interface NoneCafeListProps {
-  onWriteReview?: (cafe: SimpleCafe) => void;
+  onWriteReview?: (cafe: Cafe) => void;
 }
 
-const fetchFranchiseCafes = async (lat: number, lng: number): Promise<SimpleCafe[]> => {
+const fetchFranchiseCafes = async (lat: number, lng: number): Promise<Cafe[]> => {
   const KAKAO_API_KEY = import.meta.env.VITE_KAKAO_REST_API_KEY;
   const brands = ['스타벅스', '투썸플레이스', '할리스','이디야','폴바셋','엔제리너스','스터디'];
-  let results: SimpleCafe[] = [];
+  let results: Cafe[] = [];
 
   // 프랜차이즈 3개
   // 랜덤으로 3개의 브랜드 선택
@@ -31,9 +26,31 @@ const fetchFranchiseCafes = async (lat: number, lng: number): Promise<SimpleCafe
     if (data.documents && data.documents.length > 0) {
       const item = data.documents[0];
       results.push({
+        id: 'kakao-' + item.id,
         name: item.place_name,
         address: item.road_address_name || item.address_name,
-        distance: item.distance + 'm'
+        distance: Number(item.distance) / 1000, // km로 변환
+        rating: 0,
+        reviewCount: 0,
+        images: [],
+        features: {
+          seats: 'many',
+          deskHeight: 'mixed',
+          outlets: 'many',
+          recommended: false,
+          wifi: 'excellent',
+          atmosphere: []
+        },
+        hours: {
+          open: '',
+          close: '',
+          isOpen: false
+        },
+        comments: [],
+        reviews: [],
+        lat: parseFloat(item.y),
+        lng: parseFloat(item.x),
+        place_url: item.place_url
       });
     }
   }
@@ -50,9 +67,31 @@ const fetchFranchiseCafes = async (lat: number, lng: number): Promise<SimpleCafe
     const randomIndex = Math.floor(Math.random() * data.documents.length);
     const item = data.documents[randomIndex];
     results.push({
+      id: 'kakao-' + item.id,
       name: item.place_name,
       address: item.road_address_name || item.address_name,
-      distance: item.distance + 'm'
+      distance: Number(item.distance) / 1000, // km로 변환
+      rating: 0,
+      reviewCount: 0,
+      images: [],
+      features: {
+        seats: 'many',
+        deskHeight: 'mixed',
+        outlets: 'many',
+        recommended: false,
+        wifi: 'excellent',
+        atmosphere: []
+      },
+      hours: {
+        open: '',
+        close: '',
+        isOpen: false
+      },
+      comments: [],
+      reviews: [],
+      lat: parseFloat(item.y),
+      lng: parseFloat(item.x),
+      place_url: item.place_url
     });
   }
 
@@ -60,7 +99,7 @@ const fetchFranchiseCafes = async (lat: number, lng: number): Promise<SimpleCafe
 };
 
 const NoneCafeList: React.FC<NoneCafeListProps> = ({ onWriteReview }) => {
-  const [cafes, setCafes] = useState<SimpleCafe[]>([]);
+  const [cafes, setCafes] = useState<Cafe[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -98,7 +137,7 @@ const NoneCafeList: React.FC<NoneCafeListProps> = ({ onWriteReview }) => {
                 </div>
               </div>
               <div className="flex flex-col items-end gap-2">
-                <span className="text-sm text-gray-500">{cafe.distance}</span>
+                <span className="text-sm text-gray-500">{cafe.distance}km</span>
                 <button
                   className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded-full text-xs font-medium transition-colors"
                   onClick={() => onWriteReview && onWriteReview(cafe)}

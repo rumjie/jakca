@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, Star, Clock, Wifi, Zap, Users } from 'lucide-react';
+import { MapPin, Star, Wifi, Zap, Users, Book } from 'lucide-react';
 import { Cafe } from '../types/cafe';
 
 interface CafeCardProps {
@@ -14,10 +14,8 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe, onClick, onWriteReview, isFro
     switch (feature) {
       case 'wifi':
         return <Wifi className="w-4 h-4" />;
-      case 'outlets':
-        return <Zap className="w-4 h-4" />;
       case 'seats':
-        return <Users className="w-4 h-4" />;
+        return <Book className="w-4 h-4" />;
       default:
         return null;
     }
@@ -33,13 +31,23 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe, onClick, onWriteReview, isFro
       case 'outlets':
         return value === 'many' ? '콘센트 충분' : value === 'few' ? '콘센트 보통' : '콘센트 부족';
       case 'wifi':
-        return value === 'excellent' ? '와이파이 빠름' : value === 'good' ? '와이파이 보통' : '와이파이 느림';
+        return value === 'good' ? '와이파이 빠름' : value === 'average' ? '와이파이 보통' : value === 'slow' ? '와이파이 느림' : '와이파이 없음';
       case 'seats':
-        return value === 'many' ? '많음' : value === '6~10' ? '6~10개' : value === '1~5' ? '1~5개' : '없음';
+        return value === 'many' ? '좌석 많음' : value === '6~10' ? '좌석 6~10개' : value === '1~5' ? '좌석 1~5개' : '좌석 없음';
+      case 'deskHeight':
+        return value === 'high' ? '높음' : value === 'low' ? '낮음' : value === 'mixed' ? '혼합' : value === 'normal' ? '보통' : '정보 없음';
       default:
         return String(value); // 문자열로 변환
     }
   };
+
+  // featuresToShow 추출 로직
+  let featuresToShow: any = {};
+  if (isFromDatabase && cafe.reviews && cafe.reviews.length > 0) {
+    featuresToShow = cafe.reviews[0].features;
+  } else if (Array.isArray(cafe.features) && cafe.features[0]) {
+    featuresToShow = cafe.features[0];
+  }
 
   return (
     <div className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer group">
@@ -51,19 +59,29 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe, onClick, onWriteReview, isFro
               src={cafe.images[0]}
               alt={cafe.name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              onError={(e) => {
+                // 이미지 로딩 실패 시 첫 글자 표시로 대체
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+              }}
             />
-          ) : (
-            <span className="text-5xl font-bold text-gray-400">
+          ) : null}
+          <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-100 to-amber-100 ${cafe.images && cafe.images.length > 0 && cafe.images[0] ? 'hidden' : ''}`}>
+            <span className="text-6xl font-bold text-orange-600">
               {cafe.name ? cafe.name[0] : "?"}
             </span>
-          )}
+          </div>
           <div className="absolute top-4 left-4">
             <span className="bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-sm font-medium text-gray-700">
               {cafe.distance}km
             </span>
           </div>
           <div className="absolute top-4 right-4">
-            {/* recommended 필드 삭제됨 */}
+            {isFromDatabase && (
+              <span className="bg-orange-500 text-white px-2 py-1 rounded-full text-sm font-medium">
+                추천
+              </span>
+            )}
           </div>
         </div>
 
@@ -81,38 +99,33 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe, onClick, onWriteReview, isFro
             <div className="text-right">
               <div className="flex items-center mb-1">
                 <Star className="w-4 h-4 text-yellow-400 fill-current mr-1" />
-                <span className="font-semibold text-gray-900">{cafe.rating}</span>
+                <span className="font-semibold text-gray-900">
+                  {cafe.rating || 0}
+                </span>
               </div>
+              {cafe.review_count !== undefined && (
+                <div className="text-sm text-gray-500">
+                  {cafe.review_count}개 리뷰
+                </div>
+              )}
             </div>
           </div>
 
           {/* Features */}
           <div className="flex flex-wrap gap-2 mb-4">
-            {cafe.features && typeof cafe.features === 'object' && 
-              Object.entries(cafe.features)
-                .filter(([key, value]) => typeof value !== 'object' && value !== null)
-                .slice(0, 3)
-                .map(([key, value]) => (
-                  <div
-                    key={key}
-                    className="flex items-center bg-gray-100 px-3 py-1 rounded-full text-sm text-gray-700"
-                  >
-                    {getFeatureIcon(key)}
-                    <span className="ml-1">{getFeatureText(key, value)}</span>
-                  </div>
-                ))
-            }
+            {Object.entries(featuresToShow ?? {})
+              .filter(([key, value]) => ['seats', 'wifi'].includes(key) && value !== null && typeof value !== 'object')
+              .map(([key, value]) => (
+                <div
+                  key={key}
+                  className="flex items-center bg-gray-100 px-3 py-1 rounded-full text-sm text-gray-700"
+                >
+                  {getFeatureIcon(key)}
+                  <span className="ml-1">{getFeatureText(key, value)}</span>
+                </div>
+              ))}
           </div>
 
-          {/* Hours */}
-          <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
-            <div className="flex items-center">
-              <Clock className="w-4 h-4 mr-1" />
-              <span className={cafe.hours.isOpen ? 'text-green-600' : 'text-red-600'}>
-                {cafe.hours.isOpen ? '영업중' : '영업종료'} • {cafe.hours.open}-{cafe.hours.close}
-              </span>
-            </div>
-          </div>
         </div>
       </div>
 
