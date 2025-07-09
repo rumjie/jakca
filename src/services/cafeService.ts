@@ -1,6 +1,7 @@
 import { Cafe, Review, NewReview } from '../types/cafe';
 import { supabase } from '../lib/supabaseClient';
 import { v5 as uuidv5 } from 'uuid';
+import { getDistanceFromLatLonInMeters } from '../lib/utils';
 
 const NAMESPACE = '6ba7b810-9dad-11d1-80b4-00c04fd430c8'; // 고정 네임스페이스
 
@@ -31,21 +32,33 @@ export const getCafesNearby = async (lat: number, lng: number): Promise<Cafe[]> 
     .from('cafes')
     .select('*')
     .gte('rating', 3)
+    .filter('latitude', 'gte', lat - 0.02) // 대략 2km 근방
+    .filter('latitude', 'lte', lat + 0.02)
+    .filter('longitude', 'gte', lng - 0.02)
+    .filter('longitude', 'lte', lng + 0.02)
     .limit(4);
   if (error) throw error;
-  
+
+  // distance 계산해서 추가
+  const cafesWithDistance = (data as Cafe[]).map(cafe => ({
+    ...cafe,
+    distance: cafe.latitude && cafe.longitude
+      ? Math.round(getDistanceFromLatLonInMeters(lat, lng, cafe.latitude, cafe.longitude)) // m 단위, 정수
+      : null
+  }));
+
   const cafesWithKakao = await Promise.all(
-    (data as Cafe[]).map(async (cafe) => {
+    cafesWithDistance.map(async (cafe) => {
       const kakaoInfo = await getCafeInfoFromKakao(cafe.name, lng, lat); // x=lng, y=lat
       
       return {
         ...cafe,
         isFromDatabase: true, // DB에서 온 카페 표시 (UI용)
         images: [getCafeImage()],
-        lat: cafe.lat ?? (kakaoInfo ? parseFloat(kakaoInfo.y) : undefined),
-        lng: cafe.lng ?? (kakaoInfo ? parseFloat(kakaoInfo.x) : undefined),
+        latitude: cafe.latitude ?? (kakaoInfo ? parseFloat(kakaoInfo.y) : undefined),
+        longitude: cafe.longitude ?? (kakaoInfo ? parseFloat(kakaoInfo.x) : undefined),
         // place_url: cafe.place_url ?? kakaoInfo?.place_url,
-        distance: kakaoInfo && kakaoInfo.distance ? Number(kakaoInfo.distance) / 1000 : cafe.distance,
+        // distance: kakaoInfo && kakaoInfo.distance ? Number(kakaoInfo.distance) / 1000 : cafe.distance,
       };
     })
   );
@@ -100,13 +113,28 @@ export const checkCafeExists = async (cafeId: string) => {
 
 // 카페 정보 추가
 export const insertCafe = async (cafe: Cafe, cafeId: string) => {
+  let latitude = cafe.latitude;
+  let longitude = cafe.longitude;
+
+  // 위/경도 없으면 카카오 API로 채우기
+  if (!latitude || !longitude) {
+    // x, y는 0, 0 또는 대략적인 위치(예: 서울 중심)로 넣어도 됨
+    const kakaoInfo = await getCafeInfoFromKakao(cafe.name, 0, 0);
+    if (kakaoInfo) {
+      latitude = parseFloat(kakaoInfo.y);
+      longitude = parseFloat(kakaoInfo.x);
+    }
+  }
+
   const { data, error } = await supabase.from('cafes').insert([
     {
       id: cafeId,
       name: cafe.name,
       address: cafe.address,
-      rating: null, // 초기값은 null
-      review_count: 0, // 초기값은 0
+      longitude,
+      latitude,
+      rating: null,
+      review_count: 0,
       images: cafe.images,
       features: cafe.features,
       comments: cafe.comments,
@@ -235,9 +263,9 @@ export async function getCafesFromKakao(lat: number, lng: number): Promise<Cafe[
     id: 'kakao-' + item.id,
     name: item.place_name,
     address: item.road_address_name || item.address_name,
-    lat: parseFloat(item.y),
-    lng: parseFloat(item.x),
-    distance: item.distance ? Number(item.distance) / 1000 : null, // km
+    latitude: parseFloat(item.y),
+    longitude: parseFloat(item.x),
+    // distance: item.distance ? Number(item.distance) / 1000 : null, // km
     rating: null,
     reviewCount: 0,
     isFromDatabase: false, // 카카오 API에서 온 카페
@@ -278,7 +306,7 @@ async function getFranchiseCafes(lat: number, lng: number): Promise<Cafe[]> {
         id: 'kakao-' + item.id,
         name: item.place_name,
         address: item.road_address_name || item.address_name,
-        distance: Number(item.distance) / 1000, // km로 변환
+        distance: Number(item.distance) ,
         rating: 0,
         review_count: 0,
         isFromDatabase: false, // 프랜차이즈 카페는 DB에서 온 것이 아님
@@ -333,8 +361,8 @@ export async function getNearbyCafes(lat: number, lng: number): Promise<Cafe[]> 
       images: dbCafe.images && dbCafe.images.length > 0 ? dbCafe.images : kakaoMatch?.images || [],
       distance: dbCafe.distance ?? kakaoMatch?.distance ?? null,
       place_url: dbCafe.place_url ?? kakaoMatch?.place_url,
-      lat: dbCafe.lat ?? kakaoMatch?.lat,
-      lng: dbCafe.lng ?? kakaoMatch?.lng
+      latitude: dbCafe.lat ?? kakaoMatch?.lat,
+      longitude: dbCafe.lng ?? kakaoMatch?.lng
     };
   });
   return [...mergedDbCafes, ...onlyKakao];

@@ -73,7 +73,7 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe, onClick, onWriteReview, isFro
           </div>
           <div className="absolute top-4 left-4">
             <span className="bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-sm font-medium text-gray-700">
-              {cafe.distance}km
+              {cafe.distance}m
             </span>
           </div>
           <div className="absolute top-4 right-4">

@@ -2,6 +2,8 @@ export interface Cafe {
   id: string;
   name: string;
   address: string;
+  longitude: number;
+  latitude: number;
   distance: number;
   rating: number;
   review_count: number;

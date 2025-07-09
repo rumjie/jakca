@@ -142,7 +142,7 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, onWriteReview })
             </div>
             <div className="flex items-center text-gray-600 mb-2">
               <MapPin className="w-4 h-4 mr-1" />
-              {cafe.address} • {cafe.distance}km
+              {cafe.address} • {cafe.distance}m
             </div>
           </div>
 
