@@ -340,7 +340,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
                   </div>
 
                 </div>
-              </div>
+              ))}
 
               {/* Comfort */}
               <div className="flex items-center justify-between">

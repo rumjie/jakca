@@ -127,8 +127,7 @@ const Index = () => {
       }
       
       // // DB 카페만 필터링 (isFromDatabase가 true인 카페들)
-      // const dbCafes = cafesWithDistance.filter(cafe => cafe.isFromDatabase);
-      const dbCafes = cafesWithDistance;
+      const dbCafes = cafesWithDistance.filter(cafe => cafe.isFromDatabase);
 
       if (dbCafes.length === 0) {
         // DB 카페가 0개면 NoneCafeList 표시

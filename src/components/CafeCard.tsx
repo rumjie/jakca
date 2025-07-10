@@ -82,8 +82,8 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe, onClick, onWriteReview, isFro
               <span className="bg-orange-500 text-white px-2 py-1 rounded-full text-sm font-medium">
                 추천
               </span>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Content Section */}
