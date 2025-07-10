@@ -18,6 +18,7 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
   const [showSimpleList, setShowSimpleList] = useState(false);
+  const [showCafeListSheet, setShowCafeListSheet] = useState(false); // 슬라이드업 토글 상태 추가
 
   // getDistanceFromLatLonInKm, simpleCafeToCafe 임시 함수 추가
   function getDistanceFromLatLonInKm() { return 0; }
@@ -281,12 +282,6 @@ const Index = () => {
                 )}
               </div>
 
-              {/* Load More Button */}
-              <div className="text-center py-6">
-                <button className="bg-white hover:bg-gray-50 text-gray-700 px-6 py-3 rounded-full border border-gray-200 font-medium transition-colors" onClick={handleRefresh}>
-                 목록 새로고침
-                </button>
-              </div>
             </>
           ) : (
             <NoneCafeList onWriteReview={handleNoneCafeWriteReview} />
@@ -318,6 +313,43 @@ const Index = () => {
             loadCafes(userLocation?.lat, userLocation?.lng);
           }}
         />
+      )}
+
+      {/* 하단 토글 버튼 */}
+      <button
+        className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-orange-500 text-white px-6 py-3 rounded-full shadow-lg z-50"
+        onClick={() => setShowCafeListSheet(v => !v)}
+      >
+        {showCafeListSheet ? '카페 목록 닫기' : '근처 카페 보기'}
+      </button>
+
+      {/* 슬라이드업 바텀시트 */}
+      {showCafeListSheet && (
+        <div
+          className="fixed bottom-0 left-0 w-full bg-white rounded-t-2xl shadow-lg max-h-[60vh] overflow-y-auto p-4 z-40 border-t border-gray-200"
+        >
+          {cafes.length === 0 ? (
+            <div className="text-center text-gray-500">근처에 카페가 없습니다.</div>
+          ) : (
+            cafes.map(cafe => (
+              <div key={cafe.id} className="flex justify-between items-center border-b py-2">
+                <div>
+                  <div className="font-bold">{cafe.name}</div>
+                  <div className="text-xs text-gray-500">{cafe.address}</div>
+                </div>
+                <button
+                  className="bg-orange-500 text-white px-3 py-1 rounded"
+                  onClick={() => {
+                    setSelectedCafe(cafe);
+                    setShowReviewModal(true);
+                  }}
+                >
+                  리뷰 쓰기
+                </button>
+              </div>
+            ))
+          )}
+        </div>
       )}
     </div>
   );

@@ -353,66 +353,6 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
 
                 </div>
               ))}
-
-              {/* Comfort */}
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-700">편안함</span>
-                <div className="flex gap-2">
-                  {['편함', '보통', '불편함'].map((option) => (
-                    <button
-                      key={option}
-                      onClick={() => handleFeatureSelect('comfort', option)}
-                      className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                        features.comfort === option
-                          ? 'bg-orange-500 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* WiFi */}
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-700">와이파이</span>
-                <div className="flex gap-2">
-                  {['있음', '없음'].map((option) => (
-                    <button
-                      key={option}
-                      onClick={() => handleFeatureSelect('wifi', option)}
-                      className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                        features.wifi === option
-                          ? 'bg-orange-500 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Outlets */}
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-700">콘센트</span>
-                <div className="flex gap-2">
-                  {['있음', '없음'].map((option) => (
-                    <button
-                      key={option}
-                      onClick={() => handleFeatureSelect('outlets', option)}
-                      className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                        features.outlets === option
-                          ? 'bg-orange-500 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
           </div>
 
