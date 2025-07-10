@@ -203,6 +203,7 @@ const Index = () => {
     );
   }
 
+  // 첫 페이지용 카페 (4개만 표시)
   const filteredCafes = cafes.filter(
     cafe => {
       // DB에서 온 카페는 rating 3 이상만 표시
@@ -213,6 +214,13 @@ const Index = () => {
       return true;
     }
   ).slice(0, 4); // 최대 4개만 표시
+
+  // 바텀시트용 카페 (첫 페이지에 표시되지 않는 나머지 카페들)
+  const bottomSheetCafes = cafes.filter(
+    cafe => {
+      return true;
+    }
+  ).slice(4); // 4번째 이후부터 (첫 페이지에 표시되지 않는 카페들)
 
 
   return (
@@ -326,28 +334,29 @@ const Index = () => {
       {/* 슬라이드업 바텀시트 */}
       {showCafeListSheet && (
         <div
-          className="fixed bottom-0 left-0 w-full bg-white rounded-t-2xl shadow-lg max-h-[60vh] overflow-y-auto p-4 z-40 border-t border-gray-200"
+          className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-1/3 bg-white rounded-t-2xl shadow-lg max-h-[280px] overflow-y-auto p-4 z-40 border-t border-gray-200"
         >
           {cafes.length === 0 ? (
             <div className="text-center text-gray-500">근처에 카페가 없습니다.</div>
           ) : (
-            cafes.map(cafe => (
-              <div key={cafe.id} className="flex justify-between items-center border-b py-2">
-                <div>
-                  <div className="font-bold">{cafe.name}</div>
-                  <div className="text-xs text-gray-500">{cafe.address}</div>
+            // 바텀시트용 카페들 표시 (첫 페이지에 표시되지 않는 카페들)
+            bottomSheetCafes.map(cafe => (
+                <div key={cafe.id} className="flex justify-between items-center border-b py-2">
+                  <div>
+                    <div className="font-bold">{cafe.name}</div>
+                    <div className="text-xs text-gray-500">{cafe.address}</div>
+                  </div>
+                  <button
+                    className="bg-orange-500 text-white px-3 py-1 rounded"
+                    onClick={() => {
+                      setSelectedCafe(cafe);
+                      setShowReviewModal(true);
+                    }}
+                  >
+                    리뷰 쓰기
+                  </button>
                 </div>
-                <button
-                  className="bg-orange-500 text-white px-3 py-1 rounded"
-                  onClick={() => {
-                    setSelectedCafe(cafe);
-                    setShowReviewModal(true);
-                  }}
-                >
-                  리뷰 쓰기
-                </button>
-              </div>
-            ))
+              ))
           )}
         </div>
       )}

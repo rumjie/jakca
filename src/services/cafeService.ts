@@ -385,7 +385,7 @@ export async function getNearbyCafes(lat: number, lng: number): Promise<Cafe[]> 
   // 4. 항상 4개가 되도록 부족한 만큼 onlyKakao에서 추가
   const merged = [...mergedDbCafes, ...onlyKakao];
   if (merged.length >= 4) {
-    return merged.slice(0, 4);
+    return merged;
   } else {
     // 부족하면 카카오 API에서 더 받아오거나, onlyKakao에서 더 추가
     // (이미 onlyKakao가 충분히 많도록 getCafesFromKakao에서 size=15~20 등으로 요청하는 것이 중요)
