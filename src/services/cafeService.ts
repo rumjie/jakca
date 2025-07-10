@@ -252,7 +252,7 @@ async function getCafesFromKakaoWithCache(lat: number, lng: number) {
 export async function getCafesFromKakao(lat: number, lng: number): Promise<Cafe[]> {
   const KAKAO_API_KEY = import.meta.env.VITE_KAKAO_REST_API_KEY;
   const res = await fetch(
-    `https://dapi.kakao.com/v2/local/search/category.json?category_group_code=CE7&y=${lat}&x=${lng}&radius=1000&sort=distance`,
+    `https://dapi.kakao.com/v2/local/search/category.json?category_group_code=CE7&y=${lat}&x=${lng}&radius=1000&sort=distance&size=15`,
     {
       headers: { Authorization: `KakaoAK ${KAKAO_API_KEY}` }
     }
@@ -311,7 +311,7 @@ async function getFranchiseCafes(lat: number, lng: number): Promise<Cafe[]> {
     );
     const data = await res.json();
     if (data.documents && data.documents.length > 0) {
-      // 랜덤 인덱스로 다양한 지점 선택 (최대 3개까지)
+      // 랜덤 인덱스로 다양한 지점 선택 (최대 4개까지)
       const maxIndex = Math.min(data.documents.length - 1, 2);
       const randomIndex = Math.floor(Math.random() * (maxIndex + 1));
       const item = data.documents[randomIndex];
@@ -359,7 +359,7 @@ async function getAllDbCafeKeys(): Promise<Set<string>> {
 export async function getNearbyCafes(lat: number, lng: number): Promise<Cafe[]> {
   const [dbCafes, kakaoCafes, allDbCafeKeys] = await Promise.all([
     getCafesNearby(lat, lng), // DB에서 rating 3 이상 카페
-    getCafesFromKakao(lat, lng), // 카카오 API에서 카페
+    getCafesFromKakao(lat, lng), // 카카오 API에서 카페 (최소 10개 이상 반환하도록)
     getAllDbCafeKeys() // 모든 DB 카페의 이름+주소 Set
   ]);
   // 2. 카카오 카페에서 DB에 이미 존재하는 카페(점수 무관)는 제외
@@ -380,5 +380,14 @@ export async function getNearbyCafes(lat: number, lng: number): Promise<Cafe[]> 
       longitude: dbCafe.lng ?? kakaoMatch?.lng
     };
   });
-  return [...mergedDbCafes, ...onlyKakao];
+
+  // 4. 항상 4개가 되도록 부족한 만큼 onlyKakao에서 추가
+  const merged = [...mergedDbCafes, ...onlyKakao];
+  if (merged.length >= 4) {
+    return merged.slice(0, 4);
+  } else {
+    // 부족하면 카카오 API에서 더 받아오거나, onlyKakao에서 더 추가
+    // (이미 onlyKakao가 충분히 많도록 getCafesFromKakao에서 size=15~20 등으로 요청하는 것이 중요)
+    return merged.concat(onlyKakao.slice(merged.length, 4));
+  }
 }
