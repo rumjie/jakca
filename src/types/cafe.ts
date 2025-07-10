@@ -58,6 +58,7 @@ export interface NewReview {
     deskHeight: 'high' | 'low' | 'mixed'|'normal';
     outlets: 'many' | 'few' | 'limited'; // 콘센트
     wifi: 'excellent' | 'good' | 'average' | 'unavailable';
+
   };
   atmosphere: string[];
   visitDate: string;

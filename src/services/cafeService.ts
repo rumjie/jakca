@@ -223,6 +223,7 @@ export const submitReviewWithCafeCheck = async (cafe: Cafe, review: NewReview) =
   await updateCafeAfterReview(cafeId, review);
 
   return newReview;
+
 };
 
 // DB에서 카페 가져오기

@@ -6,11 +6,13 @@ import ReviewModal from '../components/ReviewModal';
 import AdBanner from '../components/AdBanner';
 import NoneCafeList from '../components/NoneCafeList';
 import { getCafesNearby, getCafeById, getNearbyCafes } from '../services/cafeService';
+
 import { Cafe } from '../types/cafe';
 // import { SimpleCafe } from '../types/simpleCafe';
 
 const Index = () => {
   const [cafes, setCafes] = useState<Cafe[]>([]);
+  const [simpleCafes, setSimpleCafes] = useState<any[]>([]);
   const [selectedCafe, setSelectedCafe] = useState<Cafe | null>(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -225,6 +227,7 @@ const Index = () => {
                 >
                   RUMJIE
                 </a>
+
               </span>
             </div>
           </div>

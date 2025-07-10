@@ -16,6 +16,7 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe, onClick, onWriteReview, isFro
         return <Wifi className="w-4 h-4" />;
       case 'seats':
         return <Book className="w-4 h-4" />;
+
       default:
         return null;
     }
@@ -50,8 +51,8 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe, onClick, onWriteReview, isFro
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer group">
-      <div onClick={onClick}>
+    <div className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer group h-full">
+      <div onClick={onClick} className="h-full flex flex-col">
         {/* Image Section */}
         <div className="relative h-48 overflow-hidden flex items-center justify-center bg-gray-100">
           {cafe.images && cafe.images.length > 0 && cafe.images[0] ? (
@@ -81,20 +82,18 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe, onClick, onWriteReview, isFro
               <span className="bg-orange-500 text-white px-2 py-1 rounded-full text-sm font-medium">
                 추천
               </span>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Content Section */}
-        <div className="p-6">
+        <div className="p-4 flex-1 flex flex-col">
           {/* Header */}
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <h3 className="text-xl font-bold text-gray-900 mb-1">{cafe.name}</h3>
-              <div className="flex items-center text-gray-600 text-sm">
-                <MapPin className="w-4 h-4 mr-1" />
-                {cafe.address}
-              </div>
+          <div className="mb-2">
+            <h3 className="font-bold text-gray-900 text-lg mb-1 line-clamp-1">{cafe.name}</h3>
+            <div className="flex items-center text-gray-600 text-xs mb-2">
+              <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
+              <span className="truncate">{cafe.address}</span>
             </div>
             <div className="text-right">
               <div className="flex items-center mb-1">
@@ -126,27 +125,6 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe, onClick, onWriteReview, isFro
               ))}
           </div>
 
-        </div>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="px-6 pb-6">
-        <div className="flex gap-3">
-          <button
-            onClick={onClick}
-            className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-xl font-medium transition-colors"
-          >
-            상세보기
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onWriteReview();
-            }}
-            className="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-xl font-medium transition-colors"
-          >
-            리뷰쓰기
-          </button>
         </div>
       </div>
     </div>
