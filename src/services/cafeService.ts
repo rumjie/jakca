@@ -1,215 +1,394 @@
-import { supabase } from '../lib/supabase';
 import { Cafe, Review, NewReview } from '../types/cafe';
-import { calculateDistance, getCurrentPosition } from '../utils/location';
+import { supabase } from '../lib/supabaseClient';
+import { v5 as uuidv5 } from 'uuid';
+import { getDistanceFromLatLonInMeters } from '../lib/utils';
 
-// Transform database row to Cafe type
-const transformCafeData = (cafeRow: any, userLat?: number, userLon?: number): Cafe => {
-  const distance = userLat && userLon 
-    ? calculateDistance(userLat, userLon, cafeRow.latitude, cafeRow.longitude)
-    : 0;
+const NAMESPACE = '6ba7b810-9dad-11d1-80b4-00c04fd430c8'; // 고정 네임스페이스
 
-  return {
-    id: cafeRow.id,
-    name: cafeRow.name,
-    address: cafeRow.address,
-    distance,
-    rating: cafeRow.rating,
-    reviewCount: cafeRow.review_count,
-    images: cafeRow.images,
-    logo: cafeRow.logo,
-    features: {
-      seats: cafeRow.seats,
-      deskHeight: cafeRow.desk_height,
-      outlets: cafeRow.outlets,
-      wifi: cafeRow.wifi,
-      atmosphere: cafeRow.atmosphere,
-      timeLimit: cafeRow.time_limit,
-      recommended: cafeRow.recommended
-    },
-    hours: {
-      open: cafeRow.open_time,
-      close: cafeRow.close_time,
-      isOpen: cafeRow.is_open
-    },
-    priceRange: cafeRow.price_range,
-    tags: cafeRow.tags,
-    reviews: []
-  };
-};
+// 카페 이름과 주소로부터 일관된 UUID 생성
+export function getCafeId(name: string, address: string) {
+  return uuidv5(`${name}_${address}`, NAMESPACE);
+}
 
-// Transform database review row to Review type
-const transformReviewData = (reviewRow: any): Review => {
-  return {
-    id: reviewRow.id,
-    userId: reviewRow.user_id,
-    userName: reviewRow.user_name,
-    rating: reviewRow.rating,
-    comment: reviewRow.comment,
-    date: new Date(reviewRow.created_at).toISOString().split('T')[0],
-    helpful: reviewRow.helpful
-  };
-};
-
-export const getCafesNearby = async (radius: number = 5): Promise<Cafe[]> => {
-  try {
-    // Get user's current location
-    let userLat = 37.5017; // Default to Gangnam, Seoul
-    let userLon = 127.0269;
-    
-    try {
-      const position = await getCurrentPosition();
-      userLat = position.coords.latitude;
-      userLon = position.coords.longitude;
-    } catch (error) {
-      console.log('위치 정보를 가져올 수 없어 기본 위치를 사용합니다.');
-    }
-
-    // Fetch cafes from database
-    const { data: cafes, error } = await supabase
-      .from('cafes')
-      .select('*')
-      .order('rating', { ascending: false });
-
-    if (error) {
-      console.error('카페 데이터 조회 실패:', error);
-      return [];
-    }
-
-    if (!cafes || cafes.length === 0) {
-      return [];
-    }
-
-    // Filter cafes within radius and transform data
-    const nearbyCafes = cafes
-      .map(cafe => transformCafeData(cafe, userLat, userLon))
-      .filter(cafe => cafe.distance <= radius)
-      .sort((a, b) => a.distance - b.distance);
-
-    // Fetch reviews for each cafe
-    for (const cafe of nearbyCafes) {
-      const { data: reviews } = await supabase
-        .from('reviews')
-        .select('*')
-        .eq('cafe_id', cafe.id)
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      if (reviews) {
-        cafe.reviews = reviews.map(transformReviewData);
-      }
-    }
-
-    return nearbyCafes;
-  } catch (error) {
-    console.error('카페 검색 중 오류 발생:', error);
-    return [];
+// 카카오 장소 검색 API로 카페 정보 가져오기 (x, y 활용, distance 반환)
+async function getCafeInfoFromKakao(name: string, x: number, y: number): Promise<any | null> {
+  const KAKAO_API_KEY = import.meta.env.VITE_KAKAO_REST_API_KEY;
+  let url = `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(name)}&x=${x}&y=${y}`;
+  const res = await fetch(url, {
+    headers: { Authorization: `KakaoAK ${KAKAO_API_KEY}` }
+  });
+  const data = await res.json();
+  if (data.documents && data.documents.length > 0) {
+    return data.documents[0];
   }
-};
+  return null;
+}
 
-export const getNearbySimpleCafes = async () => {
-  // This function remains the same as it's used as fallback
-  const nearbyyCafes = [
-    { name: '스타벅스 강남점', address: '강남구 테헤란로 100', distance: '0.1km' },
-    { name: '투썸플레이스 역삼점', address: '강남구 역삼로 200', distance: '0.3km' },
-    { name: '커피빈 논현점', address: '강남구 논현로 300', distance: '0.4km' },
-    { name: '이디야커피 선릉점', address: '강남구 선릉로 400', distance: '0.5km' },
-    { name: '할리스커피 강남센터점', address: '강남구 강남대로 500', distance: '0.6km' }
-  ];
-  
-  await new Promise(resolve => setTimeout(resolve, 500));
-  return nearbyyCafes;
+export const getCafesNearby = async (lat: number, lng: number): Promise<Cafe[]> => {
+  if (lat === undefined || lng === undefined) {
+    throw new Error('위치 정보가 필요합니다.');
+  }
+  const { data, error } = await supabase
+    .from('cafes')
+    .select('*')
+    .filter('latitude', 'gte', lat - 0.05) // 근방
+    .filter('latitude', 'lte', lat + 0.05)
+    .filter('longitude', 'gte', lng - 0.05)
+    .filter('longitude', 'lte', lng + 0.05)
+    .gte('rating', 3)
+    .limit(4);
+  if (error) throw error;
+  // distance 계산해서 추가
+  const cafesWithDistance = (data as Cafe[]).map(cafe => ({
+    ...cafe,
+    distance: cafe.latitude && cafe.longitude
+      ? Math.round(getDistanceFromLatLonInMeters(lat, lng, cafe.latitude, cafe.longitude)) // m 단위, 정수
+      : null
+  }));
+
+  const cafesWithKakao = await Promise.all(
+    cafesWithDistance.map(async (cafe) => {
+      const kakaoInfo = await getCafeInfoFromKakao(cafe.name, lng, lat); // x=lng, y=lat
+      
+      return {
+        ...cafe,
+        isFromDatabase: true, // DB에서 온 카페 표시 (UI용)
+        images: [getCafeImage()],
+        latitude: cafe.latitude ?? (kakaoInfo ? parseFloat(kakaoInfo.y) : undefined),
+        longitude: cafe.longitude ?? (kakaoInfo ? parseFloat(kakaoInfo.x) : undefined),
+        // place_url: cafe.place_url ?? kakaoInfo?.place_url,
+        // distance: kakaoInfo && kakaoInfo.distance ? Number(kakaoInfo.distance) / 1000 : cafe.distance,
+      };
+    })
+  );
+
+  // DB 카페가 4개 미만이면 프랜차이즈 카페 추가
+  if (cafesWithKakao.length < 4) {
+    const franchiseCafes = await getFranchiseCafes(lat, lng);
+    
+    // 중복 제거: DB 카페와 이름+주소가 같은 프랜차이즈 카페 제외
+    const dbCafeKeys = new Set(cafesWithKakao.map(cafe => `${cafe.name}-${cafe.address}`));
+    const uniqueFranchiseCafes = franchiseCafes.filter(cafe => 
+      !dbCafeKeys.has(`${cafe.name}-${cafe.address}`)
+    );
+    
+    const neededCount = 4 - cafesWithKakao.length;
+    const additionalCafes = uniqueFranchiseCafes.slice(0, neededCount);
+    
+    return [...cafesWithKakao, ...additionalCafes];
+  }
+
+  console.log('kakaoInfo:', data);
+  return cafesWithKakao;
 };
 
 export const getCafeById = async (id: string): Promise<Cafe> => {
-  try {
-    const { data: cafe, error } = await supabase
-      .from('cafes')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (error || !cafe) {
-      throw new Error('카페를 찾을 수 없습니다');
-    }
-
-    // Get user location for distance calculation
-    let userLat = 37.5017;
-    let userLon = 127.0269;
-    
-    try {
-      const position = await getCurrentPosition();
-      userLat = position.coords.latitude;
-      userLon = position.coords.longitude;
-    } catch (error) {
-      console.log('위치 정보를 가져올 수 없어 기본 위치를 사용합니다.');
-    }
-
-    const transformedCafe = transformCafeData(cafe, userLat, userLon);
-
-    // Fetch reviews for this cafe
-    const { data: reviews } = await supabase
-      .from('reviews')
-      .select('*')
-      .eq('cafe_id', id)
-      .order('created_at', { ascending: false });
-
-    if (reviews) {
-      transformedCafe.reviews = reviews.map(transformReviewData);
-    }
-
-    return transformedCafe;
-  } catch (error) {
-    console.error('카페 상세 정보 조회 실패:', error);
-    throw error;
+  // Simulate API call delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  const { data, error } = await supabase
+    .from('cafes')
+    .select('*')
+    .eq('id', id)
+    .single();
+  if (error || !data) {
+    throw new Error('Cafe not found');
   }
+  return data as Cafe;
 };
 
-export const submitReview = async (cafeId: string, review: NewReview): Promise<Review> => {
-  try {
-    const { data, error } = await supabase
-      .from('reviews')
-      .insert({
-        cafe_id: cafeId,
-        user_id: 'current_user', // In real app, get from auth
-        user_name: '사용자', // In real app, get from user profile
-        rating: review.rating,
-        comment: review.comment,
-        purpose: review.purpose,
-        quietness: review.features.quietness,
-        comfort: review.features.comfort,
-        wifi: review.features.wifi,
-        outlets: review.features.outlets
-      })
-      .select()
-      .single();
+// 카페 존재 여부 확인
+export const checkCafeExists = async (cafeId: string) => {
+  const { data, error } = await supabase
+    .from('cafes')
+    .select('id')
+    .eq('id', cafeId)
+    .single();
 
-    if (error) {
-      throw new Error('리뷰 저장에 실패했습니다');
-    }
-
-    // Update cafe's average rating and review count
-    const { data: allReviews } = await supabase
-      .from('reviews')
-      .select('rating')
-      .eq('cafe_id', cafeId);
-
-    if (allReviews && allReviews.length > 0) {
-      const avgRating = allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length;
-      const roundedRating = Math.round(avgRating * 10) / 10;
-
-      await supabase
-        .from('cafes')
-        .update({ 
-          rating: roundedRating, 
-          review_count: allReviews.length,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', cafeId);
-    }
-
-    return transformReviewData(data);
-  } catch (error) {
-    console.error('리뷰 제출 실패:', error);
+  if (error && error.code !== 'PGRST116') {
     throw error;
   }
+  return !!data; // true: 존재, false: 없음
 };
+
+// 카페 정보 추가
+export const insertCafe = async (cafe: Cafe, cafeId: string) => {
+  let latitude = cafe.latitude;
+  let longitude = cafe.longitude;
+
+  // 위/경도 없으면 카카오 API로 채우기
+  if (!latitude || !longitude) {
+    // x, y는 0, 0 또는 대략적인 위치(예: 서울 중심)로 넣어도 됨
+    const kakaoInfo = await getCafeInfoFromKakao(cafe.name, 0, 0);
+    if (kakaoInfo) {
+      latitude = parseFloat(kakaoInfo.y);
+      longitude = parseFloat(kakaoInfo.x);
+    }
+  }
+
+  const { data, error } = await supabase.from('cafes').insert([
+    {
+      id: cafeId,
+      name: cafe.name,
+      address: cafe.address,
+      longitude,
+      latitude,
+      rating: null,
+      review_count: 0,
+      images: cafe.images,
+      features: cafe.features,
+      comments: cafe.comments,
+      // isFromDatabase는 UI에서만 사용하므로 DB에 저장하지 않음
+    }
+  ]);
+  if (error) throw error;
+  return data;
+};
+
+// 리뷰 추가
+export const insertReview = async (cafeId: string, review: NewReview): Promise<Review> => {
+  const today = new Date().toISOString().split('T')[0];
+  const time = review.visitTime + ":00:00";
+
+  const { data, error } = await supabase.from('reviews').insert([
+    {
+      cafe_id: cafeId,
+      user_name: "test", 
+      user_id: uuidv5("test", NAMESPACE),
+      rating: review.rating,
+      comment: review.comment,
+      date: today,
+      purpose: review.purpose,
+      features: review.features,
+      atmosphere: review.atmosphere,
+      visit_date: review.visitDate,
+      visit_time: time,
+      stay_duration: review.stayDuration,
+      price_satisfaction: review.priceSatisfaction,
+      overall_satisfaction: review.overallSatisfaction
+    }
+  ]).select().single();
+
+  if (error) {
+    throw error;
+  }
+  return data as Review;
+};
+
+// 카페 정보 업데이트 (리뷰 추가 후)
+export const updateCafeAfterReview = async (cafeId: string, review: NewReview) => {
+  // 1. 해당 카페의 모든 리뷰 평점 평균 계산
+  const { data: reviews, error: reviewsError } = await supabase
+    .from('reviews')
+    .select('rating')
+    .eq('cafe_id', cafeId);
+
+  if (reviewsError) throw reviewsError;
+
+  const avgRating = reviews.length > 0 
+    ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length 
+    : 0;
+
+  // 2. 카페 정보 업데이트
+  const { error: updateError } = await supabase
+    .from('cafes')
+    .update({
+      rating: avgRating,
+      review_count: reviews.length,
+      // features와 comments는 필요에 따라 업데이트
+      features: [review.features], // 최신 리뷰의 features에 배열 추가
+      comments: [review.comment] // 최신 리뷰의 comment를 comments 배열에 추가
+    })
+    .eq('id', cafeId);
+
+  if (updateError) throw updateError;
+};
+
+// 메인 함수: 카페 확인 후 리뷰 저장
+export const submitReviewWithCafeCheck = async (cafe: Cafe, review: NewReview) => {
+  // 1. 카페 이름과 주소로부터 일관된 ID 생성
+  const cafeId = getCafeId(cafe.name, cafe.address);
+
+  // 2. 카페가 존재하는지 확인
+  const cafeExists = await checkCafeExists(cafeId);
+
+  // 3. 없으면 카페 정보 먼저 추가
+  if (!cafeExists) {
+    await insertCafe(cafe, cafeId);
+  }
+
+  // 4. 리뷰 추가
+  const newReview = await insertReview(cafeId, review);
+
+  // 5. 카페 정보 업데이트 (rating, review_count, features, comments)
+  await updateCafeAfterReview(cafeId, review);
+
+  return newReview;
+
+};
+
+// DB에서 카페 가져오기
+export async function getCafesFromDB(): Promise<Cafe[]> {
+  // ...supabase 쿼리
+  return [];
+}
+
+// 간단한 메모리 캐시
+const cache = new Map<string, {data: any, timestamp: number}>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5분
+
+async function getCafesFromKakaoWithCache(lat: number, lng: number) {
+  const key = `kakao-${lat}-${lng}`;
+  const cached = cache.get(key);
+  
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.data;
+  }
+  
+  const data = await getCafesFromKakao(lat, lng);
+  cache.set(key, {data, timestamp: Date.now()});
+  return data;
+}
+
+// 카카오 API에서 카페 가져오기
+export async function getCafesFromKakao(lat: number, lng: number): Promise<Cafe[]> {
+  const KAKAO_API_KEY = import.meta.env.VITE_KAKAO_REST_API_KEY;
+  const res = await fetch(
+    `https://dapi.kakao.com/v2/local/search/category.json?category_group_code=CE7&y=${lat}&x=${lng}&radius=1000&sort=distance&size=15`,
+    {
+      headers: { Authorization: `KakaoAK ${KAKAO_API_KEY}` }
+    }
+  );
+  const data = await res.json();
+  
+  // 랜덤하게 섞어서 다양한 카페 선택
+  const shuffledDocuments = [...data.documents].sort(() => Math.random() - 0.5);
+  
+  return shuffledDocuments.map((item: any, index: number) => ({
+    id: 'kakao-' + item.id + '-' + index, // 고유 ID 생성
+    name: item.place_name,
+    address: item.road_address_name || item.address_name,
+    latitude: parseFloat(item.y),
+    longitude: parseFloat(item.x),
+    distance: item.distance ? Number(item.distance) : null, // distance 추가
+    rating: null,
+    review_count: 0, // reviewCount → review_count
+    isFromDatabase: false, // 카카오 API에서 온 카페
+    images: [], // images 필드 추가
+    features: {
+      seats: 'many',
+      deskHeight: 'normal',
+      outlets: 'many',
+      recommended: false,
+      wifi: 'good',
+      atmosphere: []
+    },
+    comments: [],
+    reviews: [],
+    place_url: item.place_url // 카카오맵 상세페이지
+  }));
+}
+
+// 대표 이미지 예시 (Unsplash 랜덤)
+function getCafeImage() {
+  // 다양한 카페 관련 이미지를 랜덤하게 보여줌
+  return 'https://source.unsplash.com/featured/?cafe,coffee,interior,workspace,study';
+}
+
+// 프랜차이즈 카페 가져오기
+async function getFranchiseCafes(lat: number, lng: number): Promise<Cafe[]> {
+  const KAKAO_API_KEY = import.meta.env.VITE_KAKAO_REST_API_KEY;
+  const brands = ['스타벅스', '투썸플레이스', '할리스','이디야','폴바셋','엔제리너스','스터디'];
+  let results: Cafe[] = [];
+
+  // 랜덤으로 3개의 브랜드 선택
+  const randomBrands = [...brands].sort(() => Math.random() - 0.5).slice(0, 3);
+  
+  for (const brand of randomBrands) {
+    const res = await fetch(
+      `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(brand)}&y=${lat}&x=${lng}&radius=1000`,
+      {
+        headers: { Authorization: `KakaoAK ${KAKAO_API_KEY}` }
+      }
+    );
+    const data = await res.json();
+    if (data.documents && data.documents.length > 0) {
+      // 랜덤 인덱스로 다양한 지점 선택 (최대 4개까지)
+      const maxIndex = Math.min(data.documents.length - 1, 2);
+      const randomIndex = Math.floor(Math.random() * (maxIndex + 1));
+      const item = data.documents[randomIndex];
+      
+      results.push({
+        id: 'kakao-' + item.id + '-' + Math.random(), // 고유 ID 생성
+        name: item.place_name,
+        address: item.road_address_name || item.address_name,
+        distance: Number(item.distance),
+        rating: 0,
+        review_count: 0,
+        isFromDatabase: false, // 프랜차이즈 카페는 DB에서 온 것이 아님
+        images: [getCafeImage()],
+        features: {
+          seats: null,
+          deskHeight: null,
+          outlets: null,
+          recommended: false,
+          wifi: null,
+          atmosphere: []
+        },
+        comments: [],
+        reviews: [],
+        latitude: parseFloat(item.y),   // lat → latitude
+        longitude: parseFloat(item.x),  // lng → longitude
+        place_url: item.place_url,
+
+      });
+    }
+  }
+
+  return results;
+}
+
+// DB에 존재하는 모든 카페의 이름+주소 목록 반환
+async function getAllDbCafeKeys(): Promise<Set<string>> {
+  const { data, error } = await supabase
+    .from('cafes')
+    .select('name, address');
+  if (error) throw error;
+  return new Set((data as {name: string, address: string}[]).map(c => `${c.name}-${c.address}`));
+}
+
+// 두 소스 통합
+export async function getNearbyCafes(lat: number, lng: number): Promise<Cafe[]> {
+  const [dbCafes, kakaoCafes, allDbCafeKeys] = await Promise.all([
+    getCafesNearby(lat, lng), // DB에서 rating 3 이상 카페
+    getCafesFromKakao(lat, lng), // 카카오 API에서 카페 (최소 10개 이상 반환하도록)
+    getAllDbCafeKeys() // 모든 DB 카페의 이름+주소 Set
+  ]);
+  // 2. 카카오 카페에서 DB에 이미 존재하는 카페(점수 무관)는 제외
+  const onlyKakao = kakaoCafes.filter(
+    c => !allDbCafeKeys.has(`${c.name}-${c.address}`)
+  );
+  // 3. DB카페 정보 보완(기존 로직)
+  const mergedDbCafes = dbCafes.map(dbCafe => {
+    const kakaoMatch = kakaoCafes.find(
+      k => k.name === dbCafe.name && k.address === dbCafe.address
+    );
+    return {
+      ...dbCafe,
+      images: dbCafe.images && dbCafe.images.length > 0 ? dbCafe.images : kakaoMatch?.images || [],
+      distance: dbCafe.distance ?? kakaoMatch?.distance ?? null,
+      place_url: dbCafe.place_url ?? kakaoMatch?.place_url,
+      latitude: dbCafe.lat ?? kakaoMatch?.lat,
+      longitude: dbCafe.lng ?? kakaoMatch?.lng
+    };
+  });
+
+  // 4. 항상 4개가 되도록 부족한 만큼 onlyKakao에서 추가
+  const merged = [...mergedDbCafes, ...onlyKakao];
+  if (merged.length >= 4) {
+    return merged.slice(0, 4);
+  } else {
+    // 부족하면 카카오 API에서 더 받아오거나, onlyKakao에서 더 추가
+    // (이미 onlyKakao가 충분히 많도록 getCafesFromKakao에서 size=15~20 등으로 요청하는 것이 중요)
+    return merged.concat(onlyKakao.slice(merged.length, 4));
+  }
+}

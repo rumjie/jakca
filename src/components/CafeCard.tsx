@@ -1,59 +1,85 @@
-
 import React from 'react';
-import { MapPin, Star, Clock, Wifi, Zap, Users } from 'lucide-react';
+import { MapPin, Star, Wifi, Zap, Users, Book } from 'lucide-react';
 import { Cafe } from '../types/cafe';
 
 interface CafeCardProps {
   cafe: Cafe;
   onClick: () => void;
   onWriteReview: () => void;
+  isFromDatabase?: boolean;
 }
 
-const CafeCard: React.FC<CafeCardProps> = ({ cafe, onClick, onWriteReview }) => {
+const CafeCard: React.FC<CafeCardProps> = ({ cafe, onClick, onWriteReview, isFromDatabase = false }) => {
   const getFeatureIcon = (feature: string) => {
     switch (feature) {
       case 'wifi':
-        return <Wifi className="w-3 h-3" />;
-      case 'outlets':
-        return <Zap className="w-3 h-3" />;
+        return <Wifi className="w-4 h-4" />;
       case 'seats':
-        return <Users className="w-3 h-3" />;
+        return <Book className="w-4 h-4" />;
+
       default:
         return null;
     }
   };
 
   const getFeatureText = (key: string, value: any) => {
+    // value가 객체인 경우 처리
+    if (typeof value === 'object' && value !== null) {
+      return '정보 없음';
+    }
+    
     switch (key) {
       case 'outlets':
         return value === 'many' ? '콘센트 충분' : value === 'few' ? '콘센트 보통' : '콘센트 부족';
       case 'wifi':
-        return value === 'excellent' ? '빠름' : value === 'good' ? '보통' : '느림';
+        return value === 'good' ? '와이파이 빠름' : value === 'average' ? '와이파이 보통' : value === 'slow' ? '와이파이 느림' : '와이파이 없음';
       case 'seats':
-        return `${value}석`;
+        return value === 'many' ? '좌석 많음' : value === '6~10' ? '좌석 6~10개' : value === '1~5' ? '좌석 1~5개' : '좌석 없음';
+      case 'deskHeight':
+        return value === 'high' ? '책상 높이 높음' : value === 'low' ? '책상 높이 낮음' : value === 'mixed' ? '책상 높이 혼합' : value === 'normal' ? '책상 높이 보통' : '정보 없음';
       default:
-        return value;
+        return String(value); // 문자열로 변환
     }
   };
+
+  // featuresToShow 추출 로직
+  let featuresToShow: any = {};
+  if (isFromDatabase && cafe.reviews && cafe.reviews.length > 0) {
+    featuresToShow = cafe.reviews[0].features;
+  } else if (Array.isArray(cafe.features) && cafe.features[0]) {
+    featuresToShow = cafe.features[0];
+  }
 
   return (
     <div className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer group h-full">
       <div onClick={onClick} className="h-full flex flex-col">
         {/* Image Section */}
-        <div className="relative h-32 overflow-hidden">
-          <img
-            src={cafe.images[0]}
-            alt={cafe.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-          <div className="absolute top-2 left-2">
-            <span className="bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-gray-700">
-              {cafe.distance}km
+        <div className="relative h-48 overflow-hidden flex items-center justify-center bg-gray-100">
+          {cafe.images && cafe.images.length > 0 && cafe.images[0] ? (
+            <img
+              src={cafe.images[0]}
+              alt={cafe.name}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              onError={(e) => {
+                // 이미지 로딩 실패 시 첫 글자 표시로 대체
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+              }}
+            />
+          ) : null}
+          <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-100 to-amber-100 ${cafe.images && cafe.images.length > 0 && cafe.images[0] ? 'hidden' : ''}`}>
+            <span className="text-6xl font-bold text-orange-600">
+              {cafe.name ? cafe.name[0] : "?"}
             </span>
           </div>
-          {cafe.features.recommended && (
-            <div className="absolute top-2 right-2">
-              <span className="bg-orange-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+          <div className="absolute top-4 left-4">
+            <span className="bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-sm font-medium text-gray-700">
+              {cafe.distance}m
+            </span>
+          </div>
+          <div className="absolute top-4 right-4">
+            {isFromDatabase && (
+              <span className="bg-orange-500 text-white px-2 py-1 rounded-full text-sm font-medium">
                 추천
               </span>
             </div>
@@ -69,64 +95,36 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe, onClick, onWriteReview }) => 
               <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
               <span className="truncate">{cafe.address}</span>
             </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <Star className="w-3 h-3 text-yellow-400 fill-current mr-1" />
-                <span className="font-semibold text-gray-900 text-sm">{cafe.rating}</span>
-                <span className="text-xs text-gray-600 ml-1">({cafe.reviewCount})</span>
-              </div>
-              <div className="flex items-center text-xs text-gray-600">
-                <Clock className="w-3 h-3 mr-1" />
-                <span className={cafe.hours.isOpen ? 'text-green-600' : 'text-red-600'}>
-                  {cafe.hours.isOpen ? '영업중' : '영업종료'}
+            <div className="text-right">
+              <div className="flex items-center mb-1">
+                <Star className="w-4 h-4 text-yellow-400 fill-current mr-1" />
+                <span className="font-semibold text-gray-900">
+                  {cafe.rating || 0}
                 </span>
               </div>
+              {cafe.review_count !== undefined && (
+                <div className="text-sm text-gray-500">
+                  {cafe.review_count}개 리뷰
+                </div>
+              )}
             </div>
           </div>
 
           {/* Features */}
-          <div className="flex flex-wrap gap-1 mb-2">
-            {Object.entries(cafe.features).slice(0, 2).map(([key, value]) => (
-              <div
-                key={key}
-                className="flex items-center bg-gray-100 px-2 py-1 rounded-full text-xs text-gray-700"
-              >
-                {getFeatureIcon(key)}
-                <span className="ml-1">{getFeatureText(key, value)}</span>
-              </div>
-            ))}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {Object.entries(featuresToShow ?? {})
+              .filter(([key, value]) => ['seats', 'wifi'].includes(key) && value !== null && typeof value !== 'object')
+              .map(([key, value]) => (
+                <div
+                  key={key}
+                  className="flex items-center bg-gray-100 px-3 py-1 rounded-full text-sm text-gray-700"
+                >
+                  {getFeatureIcon(key)}
+                  <span className="ml-1">{getFeatureText(key, value)}</span>
+                </div>
+              ))}
           </div>
 
-          {/* Tags */}
-          <div className="flex flex-wrap gap-1 mb-3 flex-1">
-            {cafe.tags.slice(0, 2).map((tag) => (
-              <span
-                key={tag}
-                className="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-medium"
-              >
-                #{tag}
-              </span>
-            ))}
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-2 mt-auto">
-            <button
-              onClick={onClick}
-              className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors"
-            >
-              상세보기
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onWriteReview();
-              }}
-              className="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-3 rounded-lg text-sm font-medium transition-colors"
-            >
-              리뷰
-            </button>
-          </div>
         </div>
       </div>
     </div>

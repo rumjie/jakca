@@ -1,29 +1,27 @@
-
 export interface Cafe {
   id: string;
   name: string;
   address: string;
+  longitude: number;
+  latitude: number;
   distance: number;
   rating: number;
-  reviewCount: number;
+  review_count: number;
   images: string[];
   logo?: string;
+  lat?: number;
+  lng?: number;
+  place_url?: string;
+  isFromDatabase?: boolean;
   features: {
-    seats: number;
-    deskHeight: 'high' | 'low' | 'mixed';
+    seats: '0' | '1~5' | '6~10' | 'many';
+    deskHeight: 'high' | 'low' | 'mixed' | 'normal';
     outlets: 'many' | 'few' | 'limited';
-    wifi: 'excellent' | 'good' | 'average';
-    atmosphere: string;
-    timeLimit: string;
     recommended: boolean;
+    wifi: 'good' | 'average' | 'slow' | 'unavailable';
+    atmosphere: string[];
   };
-  hours: {
-    open: string;
-    close: string;
-    isOpen: boolean;
-  };
-  priceRange: string;
-  tags: string[];
+  comments: string[];
   reviews: Review[];
 }
 
@@ -35,16 +33,37 @@ export interface Review {
   comment: string;
   date: string;
   helpful: number;
+  purpose: string;
+  features: {
+    seats: '0' | '1~5' | '6~10' | 'many';
+    deskHeight: 'high' | 'low' | 'mixed'|'normal';
+    outlets: 'many' | 'few' | 'limited';
+    wifi: 'excellent' | 'good' | 'average' | 'unavailable';
+  };
+  atmosphere: string[];
+  visitDate: string;
+  visitTime: string;
+  stayDuration: string;
+  priceSatisfaction: number;
+  overallSatisfaction: number;
 }
 
 export interface NewReview {
   rating: number;
   comment: string;
+  // date : 리뷰 넣을때 생성됨
   purpose: string;
   features: {
-    quietness: '좋음' | '보통' | '아쉬움';
-    comfort: '편함' | '보통' | '불편함';
-    wifi: '있음' | '없음';
-    outlets: '있음' | '없음';
+    seats: '0' | '1~5' | '6~10' | 'many';
+    deskHeight: 'high' | 'low' | 'mixed'|'normal';
+    outlets: 'many' | 'few' | 'limited'; // 콘센트
+    wifi: 'excellent' | 'good' | 'average' | 'unavailable';
+
   };
+  atmosphere: string[];
+  visitDate: string;
+  visitTime: string;
+  stayDuration: string;
+  priceSatisfaction: number;
+  overallSatisfaction: number;
 }
