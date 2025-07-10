@@ -35,7 +35,7 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe, onClick, onWriteReview, isFro
       case 'seats':
         return value === 'many' ? '좌석 많음' : value === '6~10' ? '좌석 6~10개' : value === '1~5' ? '좌석 1~5개' : '좌석 없음';
       case 'deskHeight':
-        return value === 'high' ? '높음' : value === 'low' ? '낮음' : value === 'mixed' ? '혼합' : value === 'normal' ? '보통' : '정보 없음';
+        return value === 'high' ? '책상 높이 높음' : value === 'low' ? '책상 높이 낮음' : value === 'mixed' ? '책상 높이 혼합' : value === 'normal' ? '책상 높이 보통' : '정보 없음';
       default:
         return String(value); // 문자열로 변환
     }

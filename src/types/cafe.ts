@@ -21,11 +21,6 @@ export interface Cafe {
     wifi: 'good' | 'average' | 'slow' | 'unavailable';
     atmosphere: string[];
   };
-  hours: {
-    open: string;
-    close: string;
-    isOpen: boolean;
-  };
   comments: string[];
   reviews: Review[];
 }

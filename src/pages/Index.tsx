@@ -4,7 +4,6 @@ import CafeCard from '../components/CafeCard';
 import CafeDetail from '../components/CafeDetail';
 import ReviewModal from '../components/ReviewModal';
 import AdBanner from '../components/AdBanner';
-// import { getCafesNearby,   } from '../services/cafeService';
 import NoneCafeList from '../components/NoneCafeList';
 import { getCafesNearby, getCafeById, getNearbyCafes } from '../services/cafeService';
 import { Cafe } from '../types/cafe';
@@ -293,7 +292,8 @@ const Index = () => {
           onSubmit={(review) => {
             setShowReviewModal(false);
             setSelectedCafe(null);
-            loadCafes();
+            // 현재 위치 정보를 전달
+            loadCafes(userLocation?.lat, userLocation?.lng);
           }}
         />
       )}

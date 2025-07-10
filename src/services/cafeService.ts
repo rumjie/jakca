@@ -31,14 +31,13 @@ export const getCafesNearby = async (lat: number, lng: number): Promise<Cafe[]> 
   const { data, error } = await supabase
     .from('cafes')
     .select('*')
+    .filter('latitude', 'gte', lat - 0.05) // 근방
+    .filter('latitude', 'lte', lat + 0.05)
+    .filter('longitude', 'gte', lng - 0.05)
+    .filter('longitude', 'lte', lng + 0.05)
     .gte('rating', 3)
-    .filter('latitude', 'gte', lat - 0.02) // 대략 2km 근방
-    .filter('latitude', 'lte', lat + 0.02)
-    .filter('longitude', 'gte', lng - 0.02)
-    .filter('longitude', 'lte', lng + 0.02)
     .limit(4);
   if (error) throw error;
-
   // distance 계산해서 추가
   const cafesWithDistance = (data as Cafe[]).map(cafe => ({
     ...cafe,
