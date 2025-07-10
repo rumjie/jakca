@@ -83,7 +83,13 @@ const Index = () => {
           loadCafes(latitude, longitude);
         },
         (error) => {
-          console.error('위치 정보 에러:', error);
+          console.error('위치 정보 에러 상세:', {
+            code: error.code,
+            message: error.message,
+            PERMISSION_DENIED: error.code === 1,
+            POSITION_UNAVAILABLE: error.code === 2,
+            TIMEOUT: error.code === 3
+          });
           
           // 에러 코드별 메시지
           let errorMessage = '위치 정보를 가져올 수 없습니다';
@@ -106,8 +112,14 @@ const Index = () => {
             address: '서울 중구'
           };
           
+          console.log('기본 위치로 대체:', defaultLocation);
           setUserLocation(defaultLocation);
           loadCafes(defaultLocation.lat, defaultLocation.lng);
+          
+          // 사용자에게 안내 (선택사항)
+          if (error.code === 2) {
+            console.warn('💡 위치 정보를 사용할 수 없습니다. 네트워크 연결과 GPS 신호를 확인해주세요.');
+          }
         }
       );
     } else {
