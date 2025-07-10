@@ -41,11 +41,6 @@ const fetchFranchiseCafes = async (lat: number, lng: number): Promise<Cafe[]> =>
           wifi: 'excellent',
           atmosphere: []
         },
-        hours: {
-          open: '',
-          close: '',
-          isOpen: false
-        },
         comments: [],
         reviews: [],
         lat: parseFloat(item.y),
@@ -116,6 +111,7 @@ const NoneCafeList: React.FC<NoneCafeListProps> = ({ onWriteReview }) => {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-50">
       <div className="bg-white rounded-2xl shadow-sm p-6 w-full max-w-2xl mt-12">
+        {/* 안내 메시지 */}
         <div className="text-center mb-6">
           <p className="text-gray-600 text-lg">
             아직 등록된 이 근처 작카가 없어요! <br />
@@ -123,6 +119,7 @@ const NoneCafeList: React.FC<NoneCafeListProps> = ({ onWriteReview }) => {
             전국 어디서든 작카를 찾을 때까지.. ☕️
           </p>
         </div>
+        {/* 프랜차이즈/카카오 카페 카드 리스트 */}
         <div className="flex flex-col items-center space-y-3">
           {cafes.map((cafe, index) => (
             <div

@@ -123,10 +123,17 @@ const Index = () => {
       } else {
         cafesWithDistance = await getCafesNearby(userLat, userLng);
       }
-      if (cafesWithDistance.length === 0) {
+      
+      // // DB 카페만 필터링 (isFromDatabase가 true인 카페들)
+      // const dbCafes = cafesWithDistance.filter(cafe => cafe.isFromDatabase);
+      const dbCafes = cafesWithDistance;
+
+      if (dbCafes.length === 0) {
+        // DB 카페가 0개면 NoneCafeList 표시
         setShowSimpleList(true);
         setCafes([]);
       } else {
+        // DB 카페가 1개 이상이면 기존 로직대로 진행
         setCafes(cafesWithDistance);
         setShowSimpleList(false);
       }
@@ -229,7 +236,8 @@ const Index = () => {
         <div className="space-y-6">
           {/* 알림: 항상 표시 */}
           <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">알림: 프로토타입 페이지입니다</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">알림: 가오픈 페이지입니다! <br /> 
+            개선 의견이 있으시다면 github의 연락처를 참고해주세요🙏🏻</h2>
           </div>
 
           {/* 카페 리스트 or NoneCafeList */}

@@ -258,18 +258,29 @@ export async function getCafesFromKakao(lat: number, lng: number): Promise<Cafe[
     }
   );
   const data = await res.json();
-  return data.documents.map((item: any) => ({
-    id: 'kakao-' + item.id,
+  
+  // 랜덤하게 섞어서 다양한 카페 선택
+  const shuffledDocuments = [...data.documents].sort(() => Math.random() - 0.5);
+  
+  return shuffledDocuments.map((item: any, index: number) => ({
+    id: 'kakao-' + item.id + '-' + index, // 고유 ID 생성
     name: item.place_name,
     address: item.road_address_name || item.address_name,
     latitude: parseFloat(item.y),
     longitude: parseFloat(item.x),
-    // distance: item.distance ? Number(item.distance) / 1000 : null, // km
+    distance: item.distance ? Number(item.distance) : null, // distance 추가
     rating: null,
-    reviewCount: 0,
+    review_count: 0, // reviewCount → review_count
     isFromDatabase: false, // 카카오 API에서 온 카페
-    // images: getCafeImage(), // 대표 이미지
-    features: {},
+    images: [], // images 필드 추가
+    features: {
+      seats: 'many',
+      deskHeight: 'normal',
+      outlets: 'many',
+      recommended: false,
+      wifi: 'good',
+      atmosphere: []
+    },
     comments: [],
     reviews: [],
     place_url: item.place_url // 카카오맵 상세페이지
@@ -300,12 +311,16 @@ async function getFranchiseCafes(lat: number, lng: number): Promise<Cafe[]> {
     );
     const data = await res.json();
     if (data.documents && data.documents.length > 0) {
-      const item = data.documents[0];
+      // 랜덤 인덱스로 다양한 지점 선택 (최대 3개까지)
+      const maxIndex = Math.min(data.documents.length - 1, 2);
+      const randomIndex = Math.floor(Math.random() * (maxIndex + 1));
+      const item = data.documents[randomIndex];
+      
       results.push({
-        id: 'kakao-' + item.id,
+        id: 'kakao-' + item.id + '-' + Math.random(), // 고유 ID 생성
         name: item.place_name,
         address: item.road_address_name || item.address_name,
-        distance: Number(item.distance) ,
+        distance: Number(item.distance),
         rating: 0,
         review_count: 0,
         isFromDatabase: false, // 프랜차이즈 카페는 DB에서 온 것이 아님
@@ -320,9 +335,10 @@ async function getFranchiseCafes(lat: number, lng: number): Promise<Cafe[]> {
         },
         comments: [],
         reviews: [],
-        lat: parseFloat(item.y),
-        lng: parseFloat(item.x),
-        place_url: item.place_url
+        latitude: parseFloat(item.y),   // lat → latitude
+        longitude: parseFloat(item.x),  // lng → longitude
+        place_url: item.place_url,
+
       });
     }
   }

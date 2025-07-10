@@ -36,7 +36,7 @@ export interface Review {
   purpose: string;
   features: {
     seats: '0' | '1~5' | '6~10' | 'many';
-    deskHeight: 'high' | 'low' | 'mixed';
+    deskHeight: 'high' | 'low' | 'mixed'|'normal';
     outlets: 'many' | 'few' | 'limited';
     wifi: 'excellent' | 'good' | 'average' | 'unavailable';
   };
@@ -55,7 +55,7 @@ export interface NewReview {
   purpose: string;
   features: {
     seats: '0' | '1~5' | '6~10' | 'many';
-    deskHeight: 'high' | 'low' | 'mixed';
+    deskHeight: 'high' | 'low' | 'mixed'|'normal';
     outlets: 'many' | 'few' | 'limited'; // 콘센트
     wifi: 'excellent' | 'good' | 'average' | 'unavailable';
   };
