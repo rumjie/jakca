@@ -125,6 +125,29 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe, onClick, onWriteReview, isFro
               ))}
           </div>
 
+          {/* Action Buttons */}
+          <div className="mt-auto flex gap-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onWriteReview();
+              }}
+              className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors"
+            >
+              리뷰 쓰기
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                // 즐겨찾기 기능 (추후 구현)
+                console.log('즐겨찾기:', cafe.name);
+              }}
+              className="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-3 rounded-lg text-sm font-medium transition-colors"
+            >
+              ♡
+            </button>
+          </div>
+
         </div>
       </div>
     </div>
