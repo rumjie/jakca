@@ -37,6 +37,18 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
     setVisitTime(String(now.getHours()).padStart(2, '0'));
   }, []);
 
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => {
+      window.removeEventListener('keydown', handleEsc);
+    };
+  }, [onClose]);
+
   const handleFeatureChange = (feature: keyof typeof features, value: any) => {
     setFeatures(prev => ({
       ...prev,

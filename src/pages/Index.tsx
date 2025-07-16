@@ -25,6 +25,7 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
   const [showSimpleList, setShowSimpleList] = useState(false);
+  const [showCafeListSheet, setShowCafeListSheet] = useState(false); // 슬라이드업 토글 상태 추가
 
   // getDistanceFromLatLonInKm, simpleCafeToCafe 임시 함수 추가
   function getDistanceFromLatLonInKm() { return 0; }
@@ -90,7 +91,13 @@ const Index = () => {
           loadCafes(latitude, longitude);
         },
         (error) => {
-          console.error('위치 정보 에러:', error);
+          console.error('위치 정보 에러 상세:', {
+            code: error.code,
+            message: error.message,
+            PERMISSION_DENIED: error.code === 1,
+            POSITION_UNAVAILABLE: error.code === 2,
+            TIMEOUT: error.code === 3
+          });
           
           // 에러 코드별 메시지
           let errorMessage = '위치 정보를 가져올 수 없습니다';
@@ -113,8 +120,14 @@ const Index = () => {
             address: '서울 중구'
           };
           
+          console.log('기본 위치로 대체:', defaultLocation);
           setUserLocation(defaultLocation);
           loadCafes(defaultLocation.lat, defaultLocation.lng);
+          
+          // 사용자에게 안내 (선택사항)
+          if (error.code === 2) {
+            console.warn('💡 위치 정보를 사용할 수 없습니다. 네트워크 연결과 GPS 신호를 확인해주세요.');
+          }
         }
       );
     } else {
@@ -204,6 +217,7 @@ const Index = () => {
     );
   }
 
+  // 첫 페이지용 카페 (4개만 표시)
   const filteredCafes = cafes.filter(
     cafe => {
       // DB에서 온 카페는 rating 3 이상만 표시
@@ -214,6 +228,13 @@ const Index = () => {
       return true;
     }
   ).slice(0, 4); // 최대 4개만 표시
+
+  // 바텀시트용 카페 (첫 페이지에 표시되지 않는 나머지 카페들)
+  const bottomSheetCafes = cafes.filter(
+    cafe => {
+      return true;
+    }
+  ).slice(4); // 4번째 이후부터 (첫 페이지에 표시되지 않는 카페들)
 
 
   return (
@@ -303,36 +324,38 @@ const Index = () => {
               {/* Cafe List */}
               <div className="grid grid-cols-2 gap-4">
                 {filteredCafes.length > 0 ? (
-                  filteredCafes.map((cafe, index) => (
-                    <div key={cafe.id} className="contents">
-                      <CafeCard
-                        cafe={cafe}
-                        onClick={() => handleCafeClick(cafe.id)}
-                        onWriteReview={() => handleWriteReview(cafe)}
-                        isFromDatabase={cafe.isFromDatabase}
-                      />
-                      {/* Ad Banner after 2nd cafe */}
-                      {index === 1 && (
-                        <div className="col-span-2">
-                          <AdBanner />
-                        </div>
-                      )}
-                    </div>
-                  ))
+                  filteredCafes.map((cafe, index) => [
+                    <CafeCard
+                      key={cafe.id}
+                      cafe={cafe}
+                      onClick={() => handleCafeClick(cafe.id)}
+                      onWriteReview={() => handleWriteReview(cafe)}
+                      isFromDatabase={cafe.isFromDatabase}
+                    />,
+                    index === 1 && (
+                      <div key="ad-banner" className="col-span-2 flex justify-center">
+                        <AdBanner />
+                      </div>
+                    )
+                  ])
                 ) : (
-                  <NoneCafeList onWriteReview={handleNoneCafeWriteReview} />
+                  <>
+                    <NoneCafeList onWriteReview={handleNoneCafeWriteReview} />
+                    <div className="flex justify-center mt-4">
+                      <AdBanner />
+                    </div>
+                  </>
                 )}
               </div>
 
-              {/* Load More Button */}
-              <div className="text-center py-6">
-                <button className="bg-white hover:bg-gray-50 text-gray-700 px-6 py-3 rounded-full border border-gray-200 font-medium transition-colors" onClick={handleRefresh}>
-                 목록 새로고침
-                </button>
-              </div>
             </>
           ) : (
-            <NoneCafeList onWriteReview={handleNoneCafeWriteReview} />
+            <>
+              <NoneCafeList onWriteReview={handleNoneCafeWriteReview} />
+              <div className="flex justify-center mt-4">
+                <AdBanner />
+              </div>
+            </>
           )}
         </div>
       </div>
@@ -361,6 +384,44 @@ const Index = () => {
             loadCafes(userLocation?.lat, userLocation?.lng);
           }}
         />
+      )}
+
+      {/* 하단 토글 버튼 */}
+      <button
+        className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-orange-500 text-white px-6 py-3 rounded-full shadow-lg z-50"
+        onClick={() => setShowCafeListSheet(v => !v)}
+      >
+        {showCafeListSheet ? '카페 목록 닫기' : '근처 카페 보기'}
+      </button>
+
+      {/* 슬라이드업 바텀시트 */}
+      {showCafeListSheet && (
+        <div
+          className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-1/3 bg-white rounded-t-2xl shadow-lg max-h-[280px] overflow-y-auto p-4 z-40 border-t border-gray-200"
+        >
+          {cafes.length === 0 ? (
+            <div className="text-center text-gray-500">근처에 카페가 없습니다.</div>
+          ) : (
+            // 바텀시트용 카페들 표시 (첫 페이지에 표시되지 않는 카페들)
+            bottomSheetCafes.map(cafe => (
+                <div key={cafe.id} className="flex justify-between items-center border-b py-2">
+                  <div>
+                    <div className="font-bold">{cafe.name}</div>
+                    <div className="text-xs text-gray-500">{cafe.address}</div>
+                  </div>
+                  <button
+                    className="bg-orange-500 text-white px-3 py-1 rounded"
+                    onClick={() => {
+                      setSelectedCafe(cafe);
+                      setShowReviewModal(true);
+                    }}
+                  >
+                    리뷰 쓰기
+                  </button>
+                </div>
+              ))
+          )}
+        </div>
       )}
     </div>
   );
