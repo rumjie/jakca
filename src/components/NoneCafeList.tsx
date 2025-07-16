@@ -39,7 +39,7 @@ const fetchFranchiseCafes = async (lat: number, lng: number): Promise<Cafe[]> =>
           deskHeight: 'mixed',
           outlets: 'many',
           recommended: false,
-          wifi: 'excellent',
+          wifi: 'good',
           atmosphere: []
         },
         comments: [],
@@ -75,7 +75,7 @@ const fetchFranchiseCafes = async (lat: number, lng: number): Promise<Cafe[]> =>
         deskHeight: 'mixed',
         outlets: 'many',
         recommended: false,
-        wifi: 'excellent',
+        wifi: 'good',
         atmosphere: []
       },
       hours: {
