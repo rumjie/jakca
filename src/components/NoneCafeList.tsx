@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { MapPin } from 'lucide-react';
 import { Cafe } from '../types/cafe';
+import AdBanner from './AdBanner';
 
 interface NoneCafeListProps {
   onWriteReview?: (cafe: Cafe) => void;
@@ -120,7 +121,7 @@ const NoneCafeList: React.FC<NoneCafeListProps> = ({ onWriteReview }) => {
           </p>
         </div>
         {/* 프랜차이즈/카카오 카페 카드 리스트 */}
-        <div className="flex flex-col items-center space-y-3">
+        <div className="flex flex-col items-center space-y-3 mb-4">
           {cafes.map((cafe, index) => (
             <div
               key={index}
@@ -144,6 +145,10 @@ const NoneCafeList: React.FC<NoneCafeListProps> = ({ onWriteReview }) => {
               </div>
             </div>
           ))}
+        </div>
+        {/* 광고 영역 */}
+        <div className="flex justify-center max-h-24 overflow-hidden">
+          <AdBanner />
         </div>
       </div>
     </div>

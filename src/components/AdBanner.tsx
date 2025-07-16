@@ -1,28 +1,37 @@
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
 const AdBanner: React.FC = () => {
+  const adRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // 광고 스크립트가 없으면 추가
+    if (!document.querySelector('script[src*="adsbygoogle.js"]')) {
+      const script = document.createElement('script');
+      script.async = true;
+      script.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js";
+      document.head.appendChild(script);
+    }
+    // 광고 렌더링 트리거
+    if (window.adsbygoogle && adRef.current) {
+      try {
+        // @ts-ignore
+        window.adsbygoogle.push({});
+      } catch (e) {}
+    }
+  }, []);
+
   return (
-    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
-      <div className="flex items-center justify-between">
-        <div className="flex-1">
-          <div className="text-xs text-blue-600 font-medium mb-1">광고</div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            카페 사장님들을 위한 특별한 혜택! 
-          </h3>
-          <p className="text-gray-600 text-sm mb-3">
-            우리 카페도 리스트에 등록하고 더 많은 고객을 만나보세요
-          </p>
-          <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-            지금 등록하기
-          </button>
-        </div>
-        <div className="ml-6">
-          <div className="w-20 h-20 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-2xl flex items-center justify-center">
-            <span className="text-white text-2xl">☕</span>
-          </div>
-        </div>
-      </div>
+    <div className="w-full max-w-md flex justify-center p-3 border border-gray-100 rounded-lg bg-white">
+      <ins
+        className="adsbygoogle"
+        style={{ display: 'block', width: '100%', height: '90px' }}
+        data-ad-client="ca-pub-XXXXXXX" // 본인 광고 ID로 교체
+        data-ad-slot="YYYYYYY" // 본인 광고 슬롯으로 교체
+        data-ad-format="auto"
+        data-full-width-responsive="true"
+        ref={adRef}
+      />
     </div>
   );
 };

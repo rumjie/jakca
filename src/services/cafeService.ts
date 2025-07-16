@@ -31,23 +31,23 @@ export const getCafesNearby = async (lat: number, lng: number): Promise<Cafe[]> 
   const { data, error } = await supabase
     .from('cafes')
     .select('*')
-    .filter('latitude', 'gte', lat - 0.05) // 근방
-    .filter('latitude', 'lte', lat + 0.05)
-    .filter('longitude', 'gte', lng - 0.05)
-    .filter('longitude', 'lte', lng + 0.05)
+    .filter('latitude', 'gte', lat - 0.0135) // 약 1.5km 반경 (1도 = 약 111km)
+    .filter('latitude', 'lte', lat + 0.0135)
+    .filter('longitude', 'gte', lng - 0.0169) // 위도에 따라 경도 1도의 거리가 다름
+    .filter('longitude', 'lte', lng + 0.0169)
     .gte('rating', 3)
     .limit(4);
   if (error) throw error;
-  // distance 계산해서 추가
   const cafesWithDistance = (data as Cafe[]).map(cafe => ({
     ...cafe,
     distance: cafe.latitude && cafe.longitude
-      ? Math.round(getDistanceFromLatLonInMeters(lat, lng, cafe.latitude, cafe.longitude)) // m 단위, 정수
+      ? Math.round(getDistanceFromLatLonInMeters(lat, lng, cafe.latitude, cafe.longitude))
       : null
   }));
+  const filteredCafes = cafesWithDistance.filter(cafe => cafe.distance !== null && cafe.distance <= 1500);
 
   const cafesWithKakao = await Promise.all(
-    cafesWithDistance.map(async (cafe) => {
+    filteredCafes.map(async (cafe) => {
       const kakaoInfo = await getCafeInfoFromKakao(cafe.name, lng, lat); // x=lng, y=lat
       
       return {

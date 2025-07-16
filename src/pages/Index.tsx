@@ -269,30 +269,38 @@ const Index = () => {
               {/* Cafe List */}
               <div className="grid grid-cols-2 gap-4">
                 {filteredCafes.length > 0 ? (
-                  filteredCafes.map((cafe, index) => (
-                    <div key={cafe.id} className="contents">
-                      <CafeCard
-                        cafe={cafe}
-                        onClick={() => handleCafeClick(cafe.id)}
-                        onWriteReview={() => handleWriteReview(cafe)}
-                        isFromDatabase={cafe.isFromDatabase}
-                      />
-                      {/* Ad Banner after 2nd cafe */}
-                      {index === 1 && (
-                        <div className="col-span-2">
-                          <AdBanner />
-                        </div>
-                      )}
-                    </div>
-                  ))
+                  filteredCafes.map((cafe, index) => [
+                    <CafeCard
+                      key={cafe.id}
+                      cafe={cafe}
+                      onClick={() => handleCafeClick(cafe.id)}
+                      onWriteReview={() => handleWriteReview(cafe)}
+                      isFromDatabase={cafe.isFromDatabase}
+                    />,
+                    index === 1 && (
+                      <div key="ad-banner" className="col-span-2 flex justify-center">
+                        <AdBanner />
+                      </div>
+                    )
+                  ])
                 ) : (
-                  <NoneCafeList onWriteReview={handleNoneCafeWriteReview} />
+                  <>
+                    <NoneCafeList onWriteReview={handleNoneCafeWriteReview} />
+                    <div className="flex justify-center mt-4">
+                      <AdBanner />
+                    </div>
+                  </>
                 )}
               </div>
 
             </>
           ) : (
-            <NoneCafeList onWriteReview={handleNoneCafeWriteReview} />
+            <>
+              <NoneCafeList onWriteReview={handleNoneCafeWriteReview} />
+              <div className="flex justify-center mt-4">
+                <AdBanner />
+              </div>
+            </>
           )}
         </div>
       </div>
