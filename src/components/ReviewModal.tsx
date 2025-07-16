@@ -64,7 +64,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
   };
 
   const handleSubmit = async () => {
-    if (rating === 0 || !comment.trim() || !purpose || !visitDate || !visitTime || !stayDuration || 
+    if (rating === 0 || !comment.trim() || comment.length > 500 || !purpose || !visitDate || !visitTime || !stayDuration || 
         priceSatisfaction === 0 || overallSatisfaction === 0 ||
         !features.seats || !features.deskHeight || !features.outlets || !features.wifi ||
         atmosphere.length === 0) {
@@ -366,6 +366,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
               onChange={(e) => setComment(e.target.value)}
               placeholder="카페에 대한 솔직한 후기를 남겨주세요..."
               className="w-full p-3 border border-gray-300 rounded-xl resize-none h-32 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              maxLength={500}
             />
             <div className="text-right text-sm text-gray-500 mt-1">
               {comment.length}/500
@@ -375,7 +376,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
           {/* Submit Button */}
           <button
             onClick={handleSubmit}
-            disabled={isSubmitting || rating === 0 || !comment.trim() || !purpose || !visitDate || !visitTime || !stayDuration || 
+            disabled={isSubmitting || rating === 0 || !comment.trim() || comment.length > 500 || !purpose || !visitDate || !visitTime || !stayDuration || 
                      priceSatisfaction === 0 || overallSatisfaction === 0 ||
                      !features.seats || !features.deskHeight || !features.outlets || !features.wifi ||
                      atmosphere.length === 0}
