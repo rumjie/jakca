@@ -361,7 +361,7 @@ const Index = () => {
       {/* 슬라이드업 바텀시트 */}
       {showCafeListSheet && (
         <div
-          className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-2/5 bg-white rounded-t-2xl shadow-lg max-h-[280px] overflow-y-auto p-4 z-40 border-t border-gray-200 mb-20"
+          className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-5/6 sm:w-2/5 bg-white rounded-t-2xl shadow-lg max-h-[280px] overflow-y-auto p-4 z-40 border-t border-gray-200 mb-20"
         >
           {cafes.length === 0 ? (
             <div className="text-center text-gray-500">근처에 카페가 없습니다.</div>
@@ -370,8 +370,8 @@ const Index = () => {
             bottomSheetCafes.map(cafe => (
                 <div key={cafe.id} className="flex justify-between items-center border-b py-2">
                   <div>
-                    <div className="font-bold truncate max-w-[160px]">{cafe.name}</div>
-                    <div className="text-xs text-gray-500 truncate max-w-[200px]">{cafe.address}</div>
+                    <div className="font-bold truncate max-w-[80vw] sm:max-w-[160px]">{cafe.name}</div>
+                    <div className="text-xs text-gray-500 truncate max-w-[80vw] sm:max-w-[200px]">{cafe.address}</div>
                   </div>
                   <button
                     className="bg-orange-500 text-white px-3 py-1 rounded"
