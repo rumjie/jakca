@@ -297,6 +297,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
                   value={visitDate}
                   onChange={(e) => setVisitDate(e.target.value)}
                   className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  max={todayStr}
                 />
               </div>
               <div>
