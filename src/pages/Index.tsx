@@ -136,6 +136,19 @@ const Index = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (!showCafeListSheet) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowCafeListSheet(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showCafeListSheet]);
+
   const loadCafes = async (userLat?: number, userLng?: number) => {
     try {
       setLoading(true);
@@ -269,12 +282,16 @@ const Index = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="space-y-6">
+      <div className="max-w-3xl mx-auto px-4 py-6">
+        <div className="space-y-3">
           {/* 알림: 항상 표시 */}
           <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">알림: 가오픈 페이지입니다! <br /> 
-            개선 의견이 있으시다면 github의 연락처를 참고해주세요🙏🏻</h2>
+            <h2 className="text-base font-medium text-gray-900 mb-4 text-center"> 🧑🏻‍💻☕️  <br /> 
+            작업하기 좋은 카페를 찾아서, 작카! <br />
+            내 주변의 공부, 독서, 미팅, 작업하기 좋은 카페를 추천해드립니다. <br />
+            개선 의견이 있으시다면 github의 연락처를 참고해주세요 💕 <br />
+            <span className="text-sm">버전 정보: 1.0.0 / last updated: 2025-07-21</span>
+            </h2>
           </div>
 
           {/* 근처 카페 드롭다운 */}
@@ -387,17 +404,19 @@ const Index = () => {
       )}
 
       {/* 하단 토글 버튼 */}
-      <button
-        className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-orange-500 text-white px-6 py-3 rounded-full shadow-lg z-50"
-        onClick={() => setShowCafeListSheet(v => !v)}
-      >
-        {showCafeListSheet ? '카페 목록 닫기' : '근처 카페 보기'}
-      </button>
+      {!showReviewModal && (
+        <button
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-orange-500 text-white px-6 py-3 rounded-full shadow-lg z-50"
+          onClick={() => setShowCafeListSheet(v => !v)}
+        >
+          {showCafeListSheet ? '카페 목록 닫기' : '근처 카페 보기'}
+        </button>
+      )}
 
       {/* 슬라이드업 바텀시트 */}
       {showCafeListSheet && (
         <div
-          className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-1/3 bg-white rounded-t-2xl shadow-lg max-h-[280px] overflow-y-auto p-4 z-40 border-t border-gray-200"
+          className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-2/5 bg-white rounded-t-2xl shadow-lg max-h-[280px] overflow-y-auto p-4 z-40 border-t border-gray-200 mb-20"
         >
           {cafes.length === 0 ? (
             <div className="text-center text-gray-500">근처에 카페가 없습니다.</div>
@@ -406,8 +425,8 @@ const Index = () => {
             bottomSheetCafes.map(cafe => (
                 <div key={cafe.id} className="flex justify-between items-center border-b py-2">
                   <div>
-                    <div className="font-bold">{cafe.name}</div>
-                    <div className="text-xs text-gray-500">{cafe.address}</div>
+                    <div className="font-bold truncate max-w-[160px]">{cafe.name}</div>
+                    <div className="text-xs text-gray-500 truncate max-w-[200px]">{cafe.address}</div>
                   </div>
                   <button
                     className="bg-orange-500 text-white px-3 py-1 rounded"

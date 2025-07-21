@@ -65,7 +65,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
   };
 
   const handleSubmit = async () => {
-    if (rating === 0 || !comment.trim() || !purpose || !visitDate || !visitTime || !stayDuration || 
+    if (rating === 0 || !comment.trim() || comment.length > 500 || !purpose || !visitDate || !visitTime || !stayDuration || 
         priceSatisfaction === 0 || overallSatisfaction === 0 ||
         !features.seats || !features.deskHeight || !features.outlets || !features.wifi ||
         atmosphere.length === 0) {
@@ -102,6 +102,14 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
       setIsSubmitting(false);
     }
   };
+
+  // 현재 날짜와 시간 계산
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  const todayStr = `${yyyy}-${mm}-${dd}`;
+  const currentHour = now.getHours();
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -290,6 +298,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
                   value={visitDate}
                   onChange={(e) => setVisitDate(e.target.value)}
                   className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  max={todayStr}
                 />
               </div>
               <div>
@@ -300,7 +309,11 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
                   className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 >
                   {Array.from({ length: 24 }, (_, i) => (
-                    <option key={i} value={String(i).padStart(2, '0')}>
+                    <option
+                      key={i}
+                      value={String(i).padStart(2, '0')}
+                      disabled={visitDate === todayStr && i > currentHour}
+                    >
                       {String(i).padStart(2, '0')}시
                     </option>
                   ))}
@@ -366,6 +379,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
               onChange={(e) => setComment(e.target.value)}
               placeholder="카페에 대한 솔직한 후기를 남겨주세요..."
               className="w-full p-3 border border-gray-300 rounded-xl resize-none h-32 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              maxLength={500}
             />
             <div className="text-right text-sm text-gray-500 mt-1">
               {comment.length}/500
@@ -375,7 +389,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
           {/* Submit Button */}
           <button
             onClick={handleSubmit}
-            disabled={isSubmitting || rating === 0 || !comment.trim() || !purpose || !visitDate || !visitTime || !stayDuration || 
+            disabled={isSubmitting || rating === 0 || !comment.trim() || comment.length > 500 || !purpose || !visitDate || !visitTime || !stayDuration || 
                      priceSatisfaction === 0 || overallSatisfaction === 0 ||
                      !features.seats || !features.deskHeight || !features.outlets || !features.wifi ||
                      atmosphere.length === 0}
