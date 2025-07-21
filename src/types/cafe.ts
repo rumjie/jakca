@@ -1,3 +1,4 @@
+
 export interface Cafe {
   id: string;
   name: string;
@@ -18,7 +19,7 @@ export interface Cafe {
     deskHeight: 'high' | 'low' | 'mixed' | 'normal';
     outlets: 'many' | 'few' | 'limited';
     recommended: boolean;
-    wifi: 'good' | 'average' | 'slow' | 'unavailable';
+    wifi: 'excellent' | 'good' | 'average' | 'slow' | 'unavailable';
     atmosphere: string[];
   };
   comments: string[];

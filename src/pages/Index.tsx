@@ -1,17 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Clock, Wifi, Zap, Users, Star, Plus } from 'lucide-react';
+import { MapPin, Clock, Wifi, Zap, Users, Star, Plus, ChevronDown } from 'lucide-react';
 import CafeCard from '../components/CafeCard';
 import CafeDetail from '../components/CafeDetail';
 import ReviewModal from '../components/ReviewModal';
 import AdBanner from '../components/AdBanner';
 import NoneCafeList from '../components/NoneCafeList';
 import { getCafesNearby, getCafeById, getNearbyCafes } from '../services/cafeService';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu';
 
 import { Cafe } from '../types/cafe';
 // import { SimpleCafe } from '../types/simpleCafe';
 
 const Index = () => {
   const [cafes, setCafes] = useState<Cafe[]>([]);
+  const [allCafes, setAllCafes] = useState<Cafe[]>([]);
   const [simpleCafes, setSimpleCafes] = useState<any[]>([]);
   const [selectedCafe, setSelectedCafe] = useState<Cafe | null>(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -152,7 +159,10 @@ const Index = () => {
         cafesWithDistance = await getCafesNearby(userLat, userLng);
       }
       
-      // // DB 카페만 필터링 (isFromDatabase가 true인 카페들)
+      // 모든 카페 저장 (드롭다운용)
+      setAllCafes(cafesWithDistance);
+      
+      // DB 카페만 필터링 (isFromDatabase가 true인 카페들)
       const dbCafes = cafesWithDistance.filter(cafe => cafe.isFromDatabase);
 
       if (dbCafes.length === 0) {
@@ -206,6 +216,10 @@ const Index = () => {
   const handleNoneCafeWriteReview = (cafe: Cafe) => {
     setSelectedCafe(cafe);
     setShowReviewModal(true);
+  };
+
+  const handleDropdownCafeSelect = (cafe: Cafe) => {
+    setSelectedCafe(cafe);
   };
 
   if (loading) {
@@ -279,6 +293,47 @@ const Index = () => {
             <span className="text-sm">버전 정보: 1.0.0 / last updated: 2025-07-21</span>
             </h2>
           </div>
+
+          {/* 근처 카페 드롭다운 */}
+          {allCafes.length > 0 && (
+            <div className="bg-white rounded-2xl p-6 shadow-sm">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">근처 모든 카페</h3>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center justify-between w-full px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors">
+                  <span className="text-gray-700">카페 목록 보기</span>
+                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-80 max-h-60 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg">
+                  {allCafes.map((cafe) => (
+                    <DropdownMenuItem
+                      key={cafe.id}
+                      onClick={() => handleDropdownCafeSelect(cafe)}
+                      className="flex items-center justify-between p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                    >
+                      <div className="flex-1">
+                        <div className="font-medium text-gray-900">{cafe.name}</div>
+                        <div className="text-sm text-gray-600 flex items-center mt-1">
+                          <MapPin className="w-3 h-3 mr-1" />
+                          {cafe.address}
+                        </div>
+                        {cafe.rating && (
+                          <div className="flex items-center mt-1">
+                            <Star className="w-3 h-3 text-yellow-400 fill-current mr-1" />
+                            <span className="text-sm text-gray-600">{cafe.rating.toFixed(1)}</span>
+                          </div>
+                        )}
+                      </div>
+                      {cafe.distance && (
+                        <span className="text-sm text-gray-500 ml-2">
+                          {cafe.distance < 1000 ? `${cafe.distance}m` : `${(cafe.distance / 1000).toFixed(1)}km`}
+                        </span>
+                      )}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
 
           {/* 카페 리스트 or NoneCafeList */}
           {!showSimpleList ? (
