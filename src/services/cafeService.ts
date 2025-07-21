@@ -53,7 +53,7 @@ export const getCafesNearby = async (lat: number, lng: number): Promise<Cafe[]> 
       return {
         ...cafe,
         isFromDatabase: true, // DB에서 온 카페 표시 (UI용)
-        images: [getCafeImage()],
+        images: [],
         latitude: cafe.latitude ?? (kakaoInfo ? parseFloat(kakaoInfo.y) : undefined),
         longitude: cafe.longitude ?? (kakaoInfo ? parseFloat(kakaoInfo.x) : undefined),
         // place_url: cafe.place_url ?? kakaoInfo?.place_url,
@@ -288,12 +288,6 @@ export async function getCafesFromKakao(lat: number, lng: number): Promise<Cafe[
   }));
 }
 
-// 대표 이미지 예시 (Unsplash 랜덤)
-function getCafeImage() {
-  // 다양한 카페 관련 이미지를 랜덤하게 보여줌
-  return 'https://source.unsplash.com/featured/?cafe,coffee,interior,workspace,study';
-}
-
 // 프랜차이즈 카페 가져오기
 async function getFranchiseCafes(lat: number, lng: number): Promise<Cafe[]> {
   const KAKAO_API_KEY = import.meta.env.VITE_KAKAO_REST_API_KEY;
@@ -325,7 +319,7 @@ async function getFranchiseCafes(lat: number, lng: number): Promise<Cafe[]> {
         rating: 0,
         review_count: 0,
         isFromDatabase: false, // 프랜차이즈 카페는 DB에서 온 것이 아님
-        images: [getCafeImage()],
+        images: [],
         features: {
           seats: null,
           deskHeight: null,
@@ -368,19 +362,27 @@ export async function getNearbyCafes(lat: number, lng: number): Promise<Cafe[]> 
     c => !allDbCafeKeys.has(`${c.name}-${c.address}`)
   );
   // 3. DB카페 정보 보완(기존 로직)
-  const mergedDbCafes = dbCafes.map(dbCafe => {
-    const kakaoMatch = kakaoCafes.find(
-      k => k.name === dbCafe.name && k.address === dbCafe.address
-    );
-    return {
-      ...dbCafe,
-      images: dbCafe.images && dbCafe.images.length > 0 ? dbCafe.images : kakaoMatch?.images || [],
-      distance: dbCafe.distance ?? kakaoMatch?.distance ?? null,
-      place_url: dbCafe.place_url ?? kakaoMatch?.place_url,
-      latitude: dbCafe.lat ?? kakaoMatch?.lat,
-      longitude: dbCafe.lng ?? kakaoMatch?.lng
-    };
-  });
+  const mergedDbCafes = await Promise.all(
+    dbCafes.map(async dbCafe => {
+      let images = dbCafe.images && dbCafe.images.length > 0 ? dbCafe.images : [];
+      console.log('images:', images);
+      if (images.length === 0) {
+        const url = await getCafeImageUrl(dbCafe.address, dbCafe.name);
+        if (url) images = [url];
+      }
+      const kakaoMatch = kakaoCafes.find(
+        k => k.name === dbCafe.name && k.address === dbCafe.address
+      );
+      return {
+        ...dbCafe,
+        images,
+        distance: dbCafe.distance ?? kakaoMatch?.distance ?? null,
+        place_url: dbCafe.place_url ?? kakaoMatch?.place_url,
+        latitude: dbCafe.lat ?? kakaoMatch?.lat,
+        longitude: dbCafe.lng ?? kakaoMatch?.lng
+      };
+    })
+  );
 
   // 4. 항상 4개가 되도록 부족한 만큼 onlyKakao에서 추가
   const merged = [...mergedDbCafes, ...onlyKakao];
@@ -390,5 +392,91 @@ export async function getNearbyCafes(lat: number, lng: number): Promise<Cafe[]> 
     // 부족하면 카카오 API에서 더 받아오거나, onlyKakao에서 더 추가
     // (이미 onlyKakao가 충분히 많도록 getCafesFromKakao에서 size=15~20 등으로 요청하는 것이 중요)
     return merged.concat(onlyKakao.slice(merged.length, 4));
+  }
+}
+
+// 이미지 어떻게 넣을 것인가 
+export async function getCafeImageUrl(cafeAddress: string, cafeName: string): Promise<string[]> {
+  const KAKAO_API_KEY = import.meta.env.VITE_KAKAO_REST_API_KEY;
+  const response = await fetch(
+    `https://dapi.kakao.com/v2/search/image?query=${encodeURIComponent(cafeAddress.split(' ').slice(1, 3).join(' ') + ' ' + cafeName)}
+    &size=10&sort=recency`,
+    {
+      headers: {
+        Authorization: `KakaoAK ${KAKAO_API_KEY}`,
+      },
+    }
+  );
+  const data = await response.json();
+  console.log('address check:', cafeAddress.split(' ').slice(1, 3).join(' ')); // 시/도, 구까지만 표시
+  console.log('카카오 이미지 응답:', data.documents?.length); 
+
+  return data.documents?.map(doc => doc.image_url) || [];
+}
+
+export async function getCafeThumbnail(cafeAddress: string, cafeName: string): Promise<string | undefined> {
+  // 1. 카카오 이미지 가져오기 
+  const imageUrls = await getCafeImageUrl(cafeAddress, cafeName);
+  if (imageUrls.length === 0) return undefined;
+
+  // 2. Gemini API로 이미지 분석하여 최적의 썸네일 선택
+  const imageBytes = await Promise.all(
+    imageUrls.slice(0, 3).map(async (url) => {
+      const response = await fetch(url);
+      const arrayBuffer = await response.arrayBuffer();
+      return new Uint8Array(arrayBuffer);
+    })
+  );
+
+  const resizedImages = await Promise.all(
+    imageBytes.map(async (bytes) => {
+      const img = await createImageBitmap(new Blob([bytes]));
+      const ratio = Math.min(800 / Math.max(img.width, img.height), 1.0);
+      const canvas = new OffscreenCanvas(
+        Math.round(img.width * ratio),
+        Math.round(img.height * ratio)
+      );
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Failed to get canvas context');
+      
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const blob = await canvas.convertToBlob({type: 'image/jpeg', quality: 0.85});
+      return new Uint8Array(await blob.arrayBuffer());
+    })
+  );
+
+  try {
+    const response = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-pro-vision:generateContent', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${import.meta.env.VITE_GEMINI_API_KEY}`
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            {text: "다음 이미지들 중 카페 내부 혹은 위치를 가장 잘 보여주는 이미지 한개만 고르고, index로만 대답해줘"},
+            ...resizedImages.map(bytes => ({
+              inline_data: {
+                mime_type: "image/jpeg",
+                data: btoa(String.fromCharCode.apply(null, bytes))
+              }
+            }))
+          ]
+        }]
+      })
+    });
+
+    if (!response.ok) {
+      console.error('Gemini API 호출 실패:', await response.text());
+      return imageUrls[0]; // 실패시 첫번째 이미지 반환
+    }
+
+    const text = await response.text();
+    const index = parseInt(text);
+    return !isNaN(index) && index < imageUrls.length ? imageUrls[index] : imageUrls[0];
+  } catch (error) {
+    console.error('썸네일 선택 중 에러:', error);
+    return imageUrls[0]; // 에러 발생시 첫번째 이미지 반환
   }
 }
