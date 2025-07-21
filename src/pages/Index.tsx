@@ -268,12 +268,16 @@ const Index = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="space-y-6">
+      <div className="max-w-3xl mx-auto px-4 py-6">
+        <div className="space-y-3">
           {/* 알림: 항상 표시 */}
           <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">알림: 가오픈 페이지입니다! <br /> 
-            개선 의견이 있으시다면 github의 연락처를 참고해주세요🙏🏻</h2>
+            <h2 className="text-base font-medium text-gray-900 mb-4 text-center"> 🧑🏻‍💻☕️  <br /> 
+            작업하기 좋은 카페를 찾아서, 작카! <br />
+            내 주변의 공부, 독서, 미팅, 작업하기 좋은 카페를 추천해드립니다. <br />
+            개선 의견이 있으시다면 github의 연락처를 참고해주세요 💕 <br />
+            <span className="text-sm">버전 정보: 1.0.0 / last updated: 2025-07-21</span>
+            </h2>
           </div>
 
           {/* 카페 리스트 or NoneCafeList */}
