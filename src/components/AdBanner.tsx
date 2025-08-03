@@ -1,48 +1,51 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
+
+// 카카오 애드핏 전역 타입 선언
+declare global {
+  interface Window {
+    kakaoAdfit?: {
+      ins: () => void;
+    };
+  }
+}
 
 const AdBanner: React.FC = () => {
-  const adRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
-    // 광고 스크립트가 없으면 추가
-    if (!document.querySelector('script[src*="adsbygoogle.js"]')) {
-      const script = document.createElement('script');
-      script.async = true;
-      script.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1432896495948592";
-      script.crossOrigin = "anonymous";
-      document.head.appendChild(script);
+    // 카카오 애드핏 스크립트가 이미 로드되었는지 확인
+    if (window.kakaoAdfit) {
+      window.kakaoAdfit.ins();
+      return;
     }
-    // 광고 렌더링 트리거
-    // @ts-ignore
-    if (window.adsbygoogle && adRef.current) {
-      try {
-        // @ts-ignore
-        window.adsbygoogle.push({});
-      } catch (e) {}
-    }
+
+    // 스크립트가 없으면 동적으로 로드
+    const script = document.createElement('script');
+    script.src = '//t1.daumcdn.net/kas/static/ba.min.js';
+    script.async = true;
+    script.onload = () => {
+      if (window.kakaoAdfit) {
+        window.kakaoAdfit.ins();
+      }
+    };
+    document.head.appendChild(script);
+
+    return () => {
+      // 컴포넌트 언마운트 시 스크립트 제거
+      const existingScript = document.querySelector('script[src="//t1.daumcdn.net/kas/static/ba.min.js"]');
+      if (existingScript) {
+        document.head.removeChild(existingScript);
+      }
+    };
   }, []);
 
   return (
     <div className="w-full flex justify-center p-3 border border-gray-100 rounded-lg bg-white">
-      <ins
-        className="adsbygoogle"
-        // style={{ display: 'block', width: '100%', height: '90px' }} // - 원본
-        // // style={{
-        // //   display: 'block',
-        // //   width: '100%',
-        // //   height: window.innerWidth < 600 ? '100px' : '90px'
-        // // }}
-        // data-ad-client="ca-pub-XXXXXXX" // 본인 광고 ID로 교체
-        // data-ad-slot="YYYYYYY" // 본인 광고 슬롯으로 교체
-        // data-ad-format="auto"
-        // data-full-width-responsive="true"
-        style={{ display: 'block' }}
-        data-ad-format="fluid"
-        data-ad-layout-key="-gw-3+1f-3d+2z"
-        data-ad-client="ca-pub-1432896495948592"
-        data-ad-slot="6520176233"
-        ref={adRef}
+      <ins 
+        className="kakao_ad_area" 
+        style={{ display: 'none' }}
+        data-ad-unit="DAN-HQhZ3WfcpHK5cY8y"
+        data-ad-width="320"
+        data-ad-height="50"
       />
     </div>
   );
