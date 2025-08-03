@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, Clock, Wifi, Zap, Users, Star, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import UserProfile from '@/components/auth/UserProfile';
 import CafeCard from '../components/CafeCard';
 import CafeDetail from '../components/CafeDetail';
 import ReviewModal from '../components/ReviewModal';
@@ -19,6 +23,9 @@ const Index = () => {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
   const [showSimpleList, setShowSimpleList] = useState(false);
   const [showCafeListSheet, setShowCafeListSheet] = useState(false); // 슬라이드업 토글 상태 추가
+
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
 
   // getDistanceFromLatLonInKm, simpleCafeToCafe 임시 함수 추가
   function getDistanceFromLatLonInKm() { return 0; }
@@ -249,19 +256,39 @@ const Index = () => {
                 {userLocation?.address}
               </div>
             </div>
-            <div className="bg-orange-100 px-3 py-1 rounded-full">
-              <span className="text-sm font-medium text-orange-800">
-                Developed by{' '}
-                <a
-                  href="https://github.com/rumjie"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline hover:text-orange-600"
-                >
-                  RUMJIE
-                </a>
-
-              </span>
+            <div className="flex items-center space-x-4">
+              <div className="bg-orange-100 px-3 py-1 rounded-full">
+                <span className="text-sm font-medium text-orange-800">
+                  Developed by{' '}
+                  <a
+                    href="https://github.com/rumjie"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-orange-600"
+                  >
+                    RUMJIE
+                  </a>
+                </span>
+              </div>
+              
+              {/* 인증 상태에 따른 버튼 표시 */}
+              {!authLoading && (
+                <>
+                  {isAuthenticated ? (
+                    <UserProfile />
+                  ) : (
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate('/auth')}
+                      >
+                        로그인
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -306,6 +333,7 @@ const Index = () => {
                     <div className="flex justify-center mt-4">
                       <AdBanner />
                     </div>
+
                   </>
                 )}
               </div>
@@ -317,6 +345,7 @@ const Index = () => {
               <div className="flex justify-center mt-4">
                 <AdBanner />
               </div>
+
             </>
           )}
         </div>
