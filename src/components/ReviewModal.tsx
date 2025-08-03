@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { X, Star } from 'lucide-react';
 import { Cafe, NewReview } from '../types/cafe';
@@ -15,9 +16,9 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
   const [purpose, setPurpose] = useState('');
   const [features, setFeatures] = useState({
     seats: '' as '0' | '1~5' | '6~10' | 'many' | '',
-    deskHeight: '' as 'high' | 'low' | 'mixed' | '',
+    deskHeight: '' as 'high' | 'low' | 'mixed' | 'normal' | '',
     outlets: '' as 'many' | 'few' | 'limited' | '',
-    wifi: '' as 'good' | 'average' | 'slow' | 'unavailable' | ''
+    wifi: '' as 'excellent' | 'good' | 'average' | 'slow' | 'unavailable' | ''
   });
   const [atmosphere, setAtmosphere] = useState<string[]>([]);
   const [visitDate, setVisitDate] = useState('');
@@ -26,6 +27,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
   const [priceSatisfaction, setPriceSatisfaction] = useState(0);
   const [overallSatisfaction, setOverallSatisfaction] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
   useEffect(() => {
     const now = new Date();
     const yyyy = now.getFullYear();
@@ -48,7 +50,6 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
   }, [onClose]);
 
   const handleFeatureChange = (feature: keyof typeof features, value: any) => {
-
     setFeatures(prev => ({
       ...prev,
       [feature]: value
@@ -80,9 +81,9 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
         purpose,
         features: {
           seats: features.seats as '0' | '1~5' | '6~10' | 'many',
-          deskHeight: features.deskHeight as 'high' | 'low' | 'mixed',
+          deskHeight: features.deskHeight as 'high' | 'low' | 'mixed' | 'normal',
           outlets: features.outlets as 'many' | 'few' | 'limited',
-          wifi: features.wifi as 'good' | 'average' | 'slow' | 'unavailable'
+          wifi: features.wifi as 'excellent' | 'good' | 'average' | 'slow' | 'unavailable'
         },
         atmosphere,
         visitDate,
@@ -244,7 +245,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
               <div>
                 <label className="block text-xs text-gray-600 mb-2">와이파이 *</label>
                 <div className="flex flex-wrap gap-2">
-                  {['good', 'average', 'slow', 'unavailable'].map((option) => (
+                  {['excellent', 'good', 'average', 'slow', 'unavailable'].map((option) => (
                     <button
                       key={option}
                       onClick={() => handleFeatureChange('wifi', option)}
@@ -254,7 +255,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
                     >
-                      {option === 'good' ? '빠름' : option === 'average' ? '보통' : option === 'slow' ? '느림' : '없음'}
+                      {option === 'excellent' ? '매우 빠름' : option === 'good' ? '빠름' : option === 'average' ? '보통' : option === 'slow' ? '느림' : '없음'}
                     </button>
                   ))}
                 </div>
@@ -363,7 +364,6 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
                       </button>
                     ))}
                   </div>
-
                 </div>
               ))}
             </div>
