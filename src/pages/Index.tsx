@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Clock, Wifi, Zap, Users, Star, Plus, ChevronDown } from 'lucide-react';
+import { MapPin, Clock, Wifi, Zap, Users, Star, Plus, ChevronDown, LogIn } from 'lucide-react';
 import CafeCard from '../components/CafeCard';
 import CafeDetail from '../components/CafeDetail';
 import ReviewModal from '../components/ReviewModal';
 import AdBanner from '../components/AdBanner';
 import NoneCafeList from '../components/NoneCafeList';
+import LoginModal from '../components/LoginModal';
+import UserMenu from '../components/UserMenu';
 import { getCafesNearby, getCafeById, getNearbyCafes } from '../services/cafeService';
 import {
   DropdownMenu,
@@ -12,6 +14,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
+import { Button } from '../components/ui/button';
+import { useAuth } from '../contexts/AuthContext';
 
 import { Cafe } from '../types/cafe';
 // import { SimpleCafe } from '../types/simpleCafe';
@@ -26,6 +30,9 @@ const Index = () => {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
   const [showSimpleList, setShowSimpleList] = useState(false);
   const [showCafeListSheet, setShowCafeListSheet] = useState(false); // 슬라이드업 토글 상태 추가
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  
+  const { user } = useAuth();
 
   // getDistanceFromLatLonInKm, simpleCafeToCafe 임시 함수 추가
   function getDistanceFromLatLonInKm() { return 0; }
@@ -263,19 +270,32 @@ const Index = () => {
                 {userLocation?.address}
               </div>
             </div>
-            <div className="bg-orange-100 px-3 py-1 rounded-full">
-              <span className="text-sm font-medium text-orange-800">
-                Developed by{' '}
-                <a
-                  href="https://github.com/rumjie"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline hover:text-orange-600"
+            <div className="flex items-center gap-3">
+              {user ? (
+                <UserMenu />
+              ) : (
+                <Button 
+                  onClick={() => setShowLoginModal(true)}
+                  variant="outline"
+                  className="flex items-center gap-2"
                 >
-                  RUMJIE
-                </a>
-
-              </span>
+                  <LogIn className="w-4 h-4" />
+                  로그인
+                </Button>
+              )}
+              <div className="bg-orange-100 px-3 py-1 rounded-full">
+                <span className="text-sm font-medium text-orange-800">
+                  Developed by{' '}
+                  <a
+                    href="https://github.com/rumjie"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-orange-600"
+                  >
+                    RUMJIE
+                  </a>
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -442,6 +462,12 @@ const Index = () => {
           )}
         </div>
       )}
+
+      {/* Login Modal */}
+      <LoginModal 
+        isOpen={showLoginModal} 
+        onClose={() => setShowLoginModal(false)} 
+      />
     </div>
   );
 };
