@@ -42,7 +42,7 @@ const AdBanner: React.FC = () => {
         data-ad-layout-key="-gw-3+1f-3d+2z"
         data-ad-client="ca-pub-1432896495948592"
         data-ad-slot="6520176233"
-        ref={adRef}
+        ref={adRef as any}
       />
     </div>
   );

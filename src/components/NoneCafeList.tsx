@@ -32,7 +32,7 @@ const fetchFranchiseCafes = async (lat: number, lng: number): Promise<Cafe[]> =>
         address: item.road_address_name || item.address_name,
         distance: Number(item.distance) / 1000, // km로 변환
         rating: 0,
-        reviewCount: 0,
+        review_count: 0,
         images: [],
         features: {
           seats: 'many',
@@ -44,8 +44,8 @@ const fetchFranchiseCafes = async (lat: number, lng: number): Promise<Cafe[]> =>
         },
         comments: [],
         reviews: [],
-        lat: parseFloat(item.y),
-        lng: parseFloat(item.x),
+        latitude: parseFloat(item.y),
+        longitude: parseFloat(item.x),
         place_url: item.place_url
       });
     }
@@ -68,7 +68,7 @@ const fetchFranchiseCafes = async (lat: number, lng: number): Promise<Cafe[]> =>
       address: item.road_address_name || item.address_name,
       distance: Number(item.distance) / 1000, // km로 변환
       rating: 0,
-      reviewCount: 0,
+      review_count: 0,
       images: [],
       features: {
         seats: 'many',
@@ -78,15 +78,10 @@ const fetchFranchiseCafes = async (lat: number, lng: number): Promise<Cafe[]> =>
         wifi: 'good',
         atmosphere: []
       },
-      hours: {
-        open: '',
-        close: '',
-        isOpen: false
-      },
       comments: [],
       reviews: [],
-      lat: parseFloat(item.y),
-      lng: parseFloat(item.x),
+      latitude: parseFloat(item.y),
+      longitude: parseFloat(item.x),
       place_url: item.place_url
     });
   }

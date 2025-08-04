@@ -159,7 +159,7 @@ export const insertReview = async (cafeId: string, review: NewReview): Promise<R
       date: today,
       purpose: review.purpose,
       features: review.features,
-      atmosphere: review.atmosphere,
+      atmosphere: review.atmosphere.join(','),
       visit_date: review.visitDate,
       visit_time: time,
       stay_duration: review.stayDuration,
@@ -368,7 +368,7 @@ export async function getNearbyCafes(lat: number, lng: number): Promise<Cafe[]> 
       console.log('images:', images);
       if (images.length === 0) {
         const url = await getCafeImageUrl(dbCafe.address, dbCafe.name);
-        if (url) images = [url];
+        if (url && url.length > 0) images = url;
       }
       const kakaoMatch = kakaoCafes.find(
         k => k.name === dbCafe.name && k.address === dbCafe.address

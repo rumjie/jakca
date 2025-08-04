@@ -83,7 +83,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
           seats: features.seats as '0' | '1~5' | '6~10' | 'many',
           deskHeight: features.deskHeight as 'high' | 'low' | 'mixed' | 'normal',
           outlets: features.outlets as 'many' | 'few' | 'limited',
-          wifi: features.wifi as 'excellent' | 'good' | 'average' | 'slow' | 'unavailable'
+          wifi: features.wifi === 'excellent' ? 'good' : features.wifi as 'good' | 'average' | 'slow' | 'unavailable'
         },
         atmosphere,
         visitDate,
