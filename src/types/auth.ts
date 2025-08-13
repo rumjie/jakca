@@ -4,11 +4,9 @@ export interface User {
   nickname: string;
   platform: 'web' | 'social' | 'google' | 'kakao';
   status: 'active' | 'inactive' | 'banned';
-  profile_image?: string;
   email_verified_at?: string;
-  last_login_at?: string;
   created_at: string;
-  updated_at: string;
+  // last_login_at은 DB에 없으므로 제거
 }
 
 export interface AuthState {

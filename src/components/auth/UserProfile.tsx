@@ -24,7 +24,7 @@ export default function UserProfile() {
   };
 
   const handleProfileClick = () => {
-    // 프로필 페이지로 이동 (필요시 구현)
+    // 프로필 페이지로 이동
     navigate('/profile');
   };
 
@@ -42,7 +42,6 @@ export default function UserProfile() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={user.profile_image} alt={user.nickname} />
             <AvatarFallback>
               {user.nickname.charAt(0).toUpperCase()}
             </AvatarFallback>

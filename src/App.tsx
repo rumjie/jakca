@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./components/auth/AuthPage";
 import AuthCallback from "./pages/AuthCallback";
+import Profile from "./pages/Profile";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -21,12 +22,13 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/profile" element={<Profile />} />
           {/* 보호된 라우트 예시 */}
           <Route 
-            path="/profile" 
+            path="/settings" 
             element={
               <ProtectedRoute>
-                <div>프로필 페이지 (인증 필요)</div>
+                <div>설정 페이지 (인증 필요)</div>
               </ProtectedRoute>
             } 
           />

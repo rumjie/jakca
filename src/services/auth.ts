@@ -28,8 +28,16 @@ export class AuthService {
       const { data: { user }, error } = await supabase.auth.getUser();
       
       if (error || !user) {
+        console.error('Auth 사용자 정보 가져오기 실패:', error);
         return { user: null, error: { message: '인증에 실패했습니다.' } };
       }
+
+      console.log('Auth 사용자 정보:', {
+        id: user.id,
+        email: user.email,
+        user_metadata: user.user_metadata,
+        app_metadata: user.app_metadata
+      });
 
       // users 테이블에 사용자 정보가 있는지 확인
       const { data: existingUser, error: userError } = await supabase
@@ -39,51 +47,147 @@ export class AuthService {
         .single();
 
       if (userError && userError.code === 'PGRST116') {
-        // 사용자가 users 테이블에 없으면 추가
-        // 이메일이 없을 수 있으므로 처리
-        const email = user.email || `${user.id}@social.local`;
-        const nickname = user.user_metadata?.full_name || 
-                        user.user_metadata?.name || 
-                        user.user_metadata?.nickname ||
-                        user.email?.split('@')[0] || 
-                        '사용자';
-
-        const { error: insertError } = await supabase
-          .from('users')
-          .insert([{
-            id: user.id,
-            email: email,
-            nickname: nickname,
-            platform: 'social',
-            email_verified_at: user.email_confirmed_at
-          }]);
-
-        if (insertError) {
-          return { user: null, error: { message: '프로필 생성에 실패했습니다.' } };
-        }
-
-        // 새로 생성된 사용자 정보 반환
-        const { data: newUser, error: newUserError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-
-        if (newUserError) {
-          return { user: null, error: { message: '사용자 정보를 가져올 수 없습니다.' } };
-        }
-
-        return { user: newUser, error: null };
+        console.log('새 사용자 생성 시작');
+        // 사용자가 users 테이블에 없으면 새로 생성
+        const result = await this.createUserFromAuth(user);
+        return result;
       }
 
       if (userError) {
+        console.error('기존 사용자 정보 조회 실패:', userError);
         return { user: null, error: { message: '사용자 정보를 가져올 수 없습니다.' } };
       }
 
-      return { user: existingUser, error: null };
+      console.log('기존 사용자 정보 업데이트 시작');
+      // 기존 사용자 정보 업데이트
+      const result = await this.updateUserFromAuth(user, existingUser);
+      return result;
     } catch (error) {
+      console.error('Auth 콜백 처리 중 오류:', error);
       return { user: null, error: { message: '알 수 없는 오류가 발생했습니다.' } };
     }
+  }
+
+  // Auth 사용자 정보로 새 사용자 생성
+  private static async createUserFromAuth(authUser: any): Promise<{ user: User | null; error: AuthError | null }> {
+    try {
+      // 이메일이 없을 수 있으므로 처리
+      const email = authUser.email || `${authUser.id}@social.local`;
+      
+      // 닉네임 추출 (다양한 소스에서 시도)
+      const nickname = authUser.user_metadata?.full_name || 
+                      authUser.user_metadata?.name || 
+                      authUser.user_metadata?.nickname ||
+                      authUser.user_metadata?.display_name ||
+                      authUser.email?.split('@')[0] || 
+                      '사용자';
+
+      // 플랫폼 판별
+      const platform = this.determinePlatform(authUser);
+
+      const { error: insertError } = await supabase
+        .from('users')
+        .insert([{
+          id: authUser.id,
+          email: email,
+          nickname: nickname,
+          platform: platform,
+          status: 'active',
+          created_at: new Date().toISOString()
+        }]);
+
+      if (insertError) {
+        console.error('사용자 생성 오류:', insertError);
+        return { user: null, error: { message: '프로필 생성에 실패했습니다.' } };
+      }
+
+      // 새로 생성된 사용자 정보 반환
+      const { data: newUser, error: newUserError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', authUser.id)
+        .single();
+
+      if (newUserError) {
+        console.error('생성된 사용자 정보 조회 실패:', newUserError);
+        return { user: null, error: { message: '사용자 정보를 가져올 수 없습니다.' } };
+      }
+
+      console.log('생성된 사용자 정보:', newUser);
+      return { user: newUser, error: null };
+    } catch (error) {
+      console.error('사용자 생성 중 예외 발생:', error);
+      return { user: null, error: { message: '사용자 생성 중 오류가 발생했습니다.' } };
+    }
+  }
+
+  // 기존 사용자 정보 업데이트
+  private static async updateUserFromAuth(authUser: any, existingUser: User): Promise<{ user: User | null; error: AuthError | null }> {
+    try {
+      const updateData: Partial<User> = {};
+
+      // 이메일 업데이트 (새로 받은 이메일이 있고, 기존과 다른 경우)
+      if (authUser.email && authUser.email !== existingUser.email) {
+        updateData.email = authUser.email;
+      }
+
+      // 닉네임 업데이트 (새로 받은 닉네임이 있고, 기존과 다른 경우)
+      const newNickname = authUser.user_metadata?.full_name || 
+                         authUser.user_metadata?.name || 
+                         authUser.user_metadata?.nickname ||
+                         authUser.user_metadata?.display_name;
+      
+      if (newNickname && newNickname !== existingUser.nickname) {
+        updateData.nickname = newNickname;
+      }
+
+      // 플랫폼 업데이트 (필요한 경우)
+      const platform = this.determinePlatform(authUser);
+      if (platform !== existingUser.platform) {
+        updateData.platform = platform;
+      }
+
+      // 업데이트할 데이터가 있는 경우에만 업데이트
+      if (Object.keys(updateData).length > 0) {
+        const { error: updateError } = await supabase
+          .from('users')
+          .update(updateData)
+          .eq('id', authUser.id);
+
+        if (updateError) {
+          console.error('사용자 업데이트 오류:', updateError);
+          // 업데이트 실패해도 기존 사용자 정보 반환
+        }
+      }
+
+      // 업데이트된 사용자 정보 반환
+      const { data: updatedUser, error: fetchError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', authUser.id)
+        .single();
+
+      if (fetchError) {
+        return { user: null, error: { message: '사용자 정보를 가져올 수 없습니다.' } };
+      }
+
+      return { user: updatedUser, error: null };
+    } catch (error) {
+      console.error('사용자 업데이트 중 오류:', error);
+      return { user: null, error: { message: '사용자 업데이트 중 오류가 발생했습니다.' } };
+    }
+  }
+
+  // 플랫폼 판별 로직
+  private static determinePlatform(authUser: any): 'google' | 'kakao' | 'social' {
+    // Supabase Auth에서 제공하는 정보로 플랫폼 판별
+    const provider = authUser.app_metadata?.provider;
+    
+    if (provider === 'google') return 'google';
+    if (provider === 'kakao') return 'kakao';
+    
+    // 기본값
+    return 'social';
   }
 
   // 회원가입 (이메일/비밀번호)
@@ -111,7 +215,8 @@ export class AuthService {
           email: authData.user.email,
           nickname: data.nickname,
           platform: data.platform,
-          email_verified_at: authData.user.email_confirmed_at
+          status: 'active',
+          created_at: new Date().toISOString()
         }]);
 
       if (profileError) {
@@ -163,12 +268,6 @@ export class AuthService {
       if (userError) {
         return { user: null, error: { message: '사용자 정보를 가져올 수 없습니다.' } };
       }
-
-      // last_login_at 업데이트
-      await supabase
-        .from('users')
-        .update({ last_login_at: new Date().toISOString() })
-        .eq('id', authData.user.id);
 
       return { user: userData, error: null };
     } catch (error) {

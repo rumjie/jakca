@@ -297,7 +297,7 @@ const Index = () => {
                         size="sm"
                         onClick={() => navigate('/auth')}
                       >
-                        로그인
+                        로그인/회원가입
                       </Button>
                     </div>
                   )}
@@ -322,7 +322,7 @@ const Index = () => {
           </div>
 
           {/* 근처 카페 드롭다운 */}
-          {allCafes.length > 0 && (
+          {/* {allCafes.length > 0 && (
             <div className="bg-white rounded-2xl p-6 shadow-sm">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">근처 모든 카페</h3>
               <DropdownMenu>
@@ -360,7 +360,7 @@ const Index = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-          )}
+          )} */}
 
           {/* 카페 리스트 or NoneCafeList */}
           {!showSimpleList ? (
