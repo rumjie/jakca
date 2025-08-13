@@ -1,6 +1,7 @@
 import React from 'react';
 import { MapPin, Star, Wifi, Zap, Users, Book } from 'lucide-react';
 import { Cafe } from '../types/cafe';
+import LikeButton from './LikeButton';
 
 interface CafeCardProps {
   cafe: Cafe;
@@ -136,16 +137,17 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe, onClick, onWriteReview, isFro
             >
               리뷰 쓰기
             </button>
-            <button
+            <div
               onClick={(e) => {
                 e.stopPropagation();
-                // 즐겨찾기 기능 (추후 구현)
-                console.log('즐겨찾기:', cafe.name);
               }}
-              className="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-3 rounded-lg text-sm font-medium transition-colors"
             >
-              ♡
-            </button>
+              <LikeButton 
+                cafeId={cafe.id} 
+                size="sm" 
+                showCount={false}
+              />
+            </div>
           </div>
 
         </div>
