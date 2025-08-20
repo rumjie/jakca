@@ -5,6 +5,7 @@ import AdBanner from './AdBanner';
 
 interface NoneCafeListProps {
   onWriteReview?: (cafe: Cafe) => void;
+  onCafesLoaded?: (cafes: Cafe[]) => void;
 }
 
 const fetchFranchiseCafes = async (lat: number, lng: number): Promise<Cafe[]> => {
@@ -30,6 +31,8 @@ const fetchFranchiseCafes = async (lat: number, lng: number): Promise<Cafe[]> =>
         id: 'kakao-' + item.id,
         name: item.place_name,
         address: item.road_address_name || item.address_name,
+        latitude: parseFloat(item.y),
+        longitude: parseFloat(item.x),
         distance: Number(item.distance) / 1000, // km로 변환
         rating: 0,
         review_count: 0,
@@ -44,63 +47,81 @@ const fetchFranchiseCafes = async (lat: number, lng: number): Promise<Cafe[]> =>
         },
         comments: [],
         reviews: [],
-        latitude: parseFloat(item.y),
-        longitude: parseFloat(item.x),
         place_url: item.place_url
       });
     }
   }
 
-  // 네 번째: 근처 카페 중 랜덤으로 하나 선택 (프랜차이즈 제외)
+  // 추가 카페들: 근처 카페 중 여러 개 선택 (프랜차이즈 제외)
   const res = await fetch(
-    `https://dapi.kakao.com/v2/local/search/category.json?category_group_code=CE7&y=${lat}&x=${lng}&radius=1000&sort=distance`,
+    `https://dapi.kakao.com/v2/local/search/category.json?category_group_code=CE7&y=${lat}&x=${lng}&radius=1000&sort=distance&size=10`,
     {
       headers: { Authorization: `KakaoAK ${KAKAO_API_KEY}` }
     }
   );
   const data = await res.json();
-  if (data.documents) {
-    const randomIndex = Math.floor(Math.random() * data.documents.length);
-    const item = data.documents[randomIndex];
-    results.push({
-      id: 'kakao-' + item.id,
-      name: item.place_name,
-      address: item.road_address_name || item.address_name,
-      distance: Number(item.distance) / 1000, // km로 변환
-      rating: 0,
-      review_count: 0,
-      images: [],
-      features: {
-        seats: 'many',
-        deskHeight: 'mixed',
-        outlets: 'many',
-        recommended: false,
-        wifi: 'good',
-        atmosphere: []
-      },
-      comments: [],
-      reviews: [],
-      latitude: parseFloat(item.y),
-      longitude: parseFloat(item.x),
-      place_url: item.place_url
-    });
+  if (data.documents && data.documents.length > 0) {
+    // 최대 6개의 추가 카페 가져오기 (총 9개가 되도록)
+    const maxAdditionalCafes = Math.min(6, data.documents.length);
+    for (let i = 0; i < maxAdditionalCafes; i++) {
+      const item = data.documents[i];
+      results.push({
+        id: 'kakao-' + item.id + '-' + i,
+        name: item.place_name,
+        address: item.road_address_name || item.address_name,
+        latitude: parseFloat(item.y),
+        longitude: parseFloat(item.x),
+        distance: Number(item.distance) / 1000, // km로 변환
+        rating: 0,
+        review_count: 0,
+        images: [],
+        features: {
+          seats: 'many',
+          deskHeight: 'mixed',
+          outlets: 'many',
+          recommended: false,
+          wifi: 'good',
+          atmosphere: []
+        },
+        comments: [],
+        reviews: [],
+        place_url: item.place_url
+      });
+    }
   }
 
   return results;
 };
 
-const NoneCafeList: React.FC<NoneCafeListProps> = ({ onWriteReview }) => {
+const NoneCafeList: React.FC<NoneCafeListProps> = ({ onWriteReview, onCafesLoaded }) => {
   const [cafes, setCafes] = useState<Cafe[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+    
     navigator.geolocation.getCurrentPosition(async (pos) => {
+      if (!isMounted) return;
+      
       const { latitude, longitude } = pos.coords;
       const data = await fetchFranchiseCafes(latitude, longitude);
+      
+      if (!isMounted) return;
+    
+      
       setCafes(data);
       setLoading(false);
+      
+      // 부모 컴포넌트에 카페 데이터 전달 (무한 루프 방지를 위해 한 번만)
+      if (onCafesLoaded && data.length > 0) {
+        onCafesLoaded(data);
+      }
     });
-  }, []);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, []); // 의존성 배열을 비워서 한 번만 실행
 
   if (loading) return <div>로딩 중...</div>;
 
@@ -115,9 +136,9 @@ const NoneCafeList: React.FC<NoneCafeListProps> = ({ onWriteReview }) => {
             전국 어디서든 작카를 찾을 때까지.. ☕️
           </p>
         </div>
-        {/* 프랜차이즈/카카오 카페 카드 리스트 */}
+        {/* 프랜차이즈 카페 카드 리스트 (처음 3개만 표시) */}
         <div className="flex flex-col items-center space-y-3 mb-4">
-          {cafes.map((cafe, index) => (
+          {cafes.slice(0, 3).map((cafe, index) => (
             <div
               key={index}
               className="w-full max-w-md flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:bg-gray-50"

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, MapPin, Star, Clock, Wifi, Zap, Users, Book } from 'lucide-react';
 import { Cafe } from '../types/cafe';
+import LikeButton from './LikeButton';
 
 interface CafeDetailProps {
   cafe: Cafe;
@@ -106,8 +107,10 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, onWriteReview })
               </div>
             )}
           </div>
+
+          {/* Image Navigation */}
           {cafe.images && cafe.images.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
               {cafe.images.map((_, index) => (
                 <button
                   key={index}
@@ -229,9 +232,13 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, onWriteReview })
             >
               리뷰 작성하기
             </button>
-            <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 px-4 rounded-xl font-medium transition-colors">
-              즐겨찾기
-            </button>
+            <div className="flex items-center">
+              <LikeButton 
+                cafeId={cafe.id} 
+                size="lg" 
+                showCount={true}
+              />
+            </div>
           </div>
         </div>
       </div>

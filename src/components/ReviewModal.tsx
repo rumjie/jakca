@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Star } from 'lucide-react';
 import { Cafe, NewReview } from '../types/cafe';
 import { submitReviewWithCafeCheck } from '../services/cafeService';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ReviewModalProps {
   cafe: Cafe;
@@ -11,6 +12,7 @@ interface ReviewModalProps {
 }
 
 const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) => {
+  const { user } = useAuth();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [purpose, setPurpose] = useState('');
@@ -65,6 +67,13 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
   };
 
   const handleSubmit = async () => {
+    // 로그인하지 않은 사용자를 위한 기본 UUID
+    const defaultUserId = '93a72f57-64b9-495e-886e-15d935b6bf04';
+    const defaultUserName = '익명 사용자';
+    
+    const userId = user?.id || defaultUserId;
+    const userName = user?.nickname || defaultUserName;
+
     if (rating === 0 || !comment.trim() || comment.length > 500 || !purpose || !visitDate || !visitTime || !stayDuration || 
         priceSatisfaction === 0 || overallSatisfaction === 0 ||
         !features.seats || !features.deskHeight || !features.outlets || !features.wifi ||
@@ -93,7 +102,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
         overallSatisfaction
       };
 
-      await submitReviewWithCafeCheck(cafe, review);
+      await submitReviewWithCafeCheck(cafe, review, userId, userName);
       onSubmit(review);
     } catch (error) {
       console.error('리뷰 제출 실패:', error);

@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Clock, Wifi, Zap, Users, Star, Plus, ChevronDown, LogIn } from 'lucide-react';
+import { MapPin, Clock, Wifi, Zap, Users, Star, Plus, ChevronDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import UserProfile from '@/components/auth/UserProfile';
+
 import CafeCard from '../components/CafeCard';
 import CafeDetail from '../components/CafeDetail';
 import ReviewModal from '../components/ReviewModal';
@@ -18,12 +23,10 @@ import { Button } from '../components/ui/button';
 import { useAuth } from '../contexts/AuthContext';
 
 import { Cafe } from '../types/cafe';
-// import { SimpleCafe } from '../types/simpleCafe';
 
 const Index = () => {
   const [cafes, setCafes] = useState<Cafe[]>([]);
   const [allCafes, setAllCafes] = useState<Cafe[]>([]);
-  const [simpleCafes, setSimpleCafes] = useState<any[]>([]);
   const [selectedCafe, setSelectedCafe] = useState<Cafe | null>(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -33,6 +36,9 @@ const Index = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   
   const { user } = useAuth();
+
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
 
   // getDistanceFromLatLonInKm, simpleCafeToCafe 임시 함수 추가
   function getDistanceFromLatLonInKm() { return 0; }
@@ -173,9 +179,9 @@ const Index = () => {
       const dbCafes = cafesWithDistance.filter(cafe => cafe.isFromDatabase);
 
       if (dbCafes.length === 0) {
-        // DB 카페가 0개면 NoneCafeList 표시
+        // DB 카페가 0개면 SimpleCafeList 표시 (카카오 API 카페들)
         setShowSimpleList(true);
-        setCafes([]);
+        setCafes(cafesWithDistance); // 카카오 API 카페들도 저장
       } else {
         // DB 카페가 1개 이상이면 기존 로직대로 진행
         setCafes(cafesWithDistance);
@@ -250,11 +256,13 @@ const Index = () => {
   ).slice(0, 4); // 최대 4개만 표시
 
   // 바텀시트용 카페 (첫 페이지에 표시되지 않는 나머지 카페들)
-  const bottomSheetCafes = cafes.filter(
-    cafe => {
-      return true;
-    }
-  ).slice(4); // 4번째 이후부터 (첫 페이지에 표시되지 않는 카페들)
+  const bottomSheetCafes = showSimpleList 
+    ? cafes.slice(3) // SimpleCafeList에서는 3번째 이후부터
+    : cafes.filter(
+        cafe => {
+          return true;
+        }
+      ).slice(4); // 기존 로직에서는 4번째 이후부터
 
 
   return (
@@ -270,19 +278,8 @@ const Index = () => {
                 {userLocation?.address}
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              {user ? (
-                <UserMenu />
-              ) : (
-                <Button 
-                  onClick={() => setShowLoginModal(true)}
-                  variant="outline"
-                  className="flex items-center gap-2"
-                >
-                  <LogIn className="w-4 h-4" />
-                  로그인
-                </Button>
-              )}
+            <div className="flex items-center space-x-4">
+
               <div className="bg-orange-100 px-3 py-1 rounded-full">
                 <span className="text-sm font-medium text-orange-800">
                   Developed by{' '}
@@ -296,6 +293,25 @@ const Index = () => {
                   </a>
                 </span>
               </div>
+              
+              {/* 인증 상태에 따른 버튼 표시 */}
+              {!authLoading && (
+                <>
+                  {isAuthenticated ? (
+                    <UserProfile />
+                  ) : (
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate('/auth')}
+                      >
+                        로그인/회원가입
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -315,7 +331,7 @@ const Index = () => {
           </div>
 
           {/* 근처 카페 드롭다운 */}
-          {allCafes.length > 0 && (
+          {/* {allCafes.length > 0 && (
             <div className="bg-white rounded-2xl p-6 shadow-sm">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">근처 모든 카페</h3>
               <DropdownMenu>
@@ -353,7 +369,7 @@ const Index = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-          )}
+          )} */}
 
           {/* 카페 리스트 or NoneCafeList */}
           {!showSimpleList ? (
@@ -381,6 +397,7 @@ const Index = () => {
                     <div className="flex justify-center mt-4">
                       <AdBanner />
                     </div>
+
                   </>
                 )}
               </div>
@@ -388,10 +405,19 @@ const Index = () => {
             </>
           ) : (
             <>
-              <NoneCafeList onWriteReview={handleNoneCafeWriteReview} />
-              <div className="flex justify-center mt-4">
-                <AdBanner />
-              </div>
+              <SimpleCafeList 
+                cafes={cafes.slice(0, 3).map(cafe => ({
+                  name: cafe.name,
+                  address: cafe.address,
+                  distance: `${cafe.distance}m`
+                }))} 
+                onWriteReview={(simpleCafe) => {
+                  const cafe = cafes.find(c => c.name === simpleCafe.name && c.address === simpleCafe.address);
+                  if (cafe) {
+                    handleWriteReview(cafe);
+                  }
+                }}
+              />
             </>
           )}
         </div>
@@ -436,17 +462,17 @@ const Index = () => {
       {/* 슬라이드업 바텀시트 */}
       {showCafeListSheet && (
         <div
-          className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-2/5 bg-white rounded-t-2xl shadow-lg max-h-[280px] overflow-y-auto p-4 z-40 border-t border-gray-200 mb-20"
+          className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-5/6 sm:w-2/5 bg-white rounded-t-2xl shadow-lg max-h-[280px] overflow-y-auto p-4 z-40 border-t border-gray-200 mb-20"
         >
-          {cafes.length === 0 ? (
-            <div className="text-center text-gray-500">근처에 카페가 없습니다.</div>
+          {bottomSheetCafes.length === 0 ? (
+            <div className="text-center text-gray-500">더 이상 표시할 카페가 없습니다.</div>
           ) : (
             // 바텀시트용 카페들 표시 (첫 페이지에 표시되지 않는 카페들)
             bottomSheetCafes.map(cafe => (
                 <div key={cafe.id} className="flex justify-between items-center border-b py-2">
                   <div>
-                    <div className="font-bold truncate max-w-[160px]">{cafe.name}</div>
-                    <div className="text-xs text-gray-500 truncate max-w-[200px]">{cafe.address}</div>
+                    <div className="font-bold truncate max-w-[80vw] sm:max-w-[160px]">{cafe.name}</div>
+                    <div className="text-xs text-gray-500 truncate max-w-[80vw] sm:max-w-[200px]">{cafe.address}</div>
                   </div>
                   <button
                     className="bg-orange-500 text-white px-3 py-1 rounded"
