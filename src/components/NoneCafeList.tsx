@@ -107,9 +107,7 @@ const NoneCafeList: React.FC<NoneCafeListProps> = ({ onWriteReview, onCafesLoade
       const data = await fetchFranchiseCafes(latitude, longitude);
       
       if (!isMounted) return;
-      
-      console.log('NoneCafeList에서 가져온 카페 수:', data.length);
-      console.log('NoneCafeList 카페 목록:', data.map(cafe => cafe.name));
+    
       
       setCafes(data);
       setLoading(false);

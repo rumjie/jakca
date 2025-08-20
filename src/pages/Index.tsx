@@ -9,7 +9,6 @@ import CafeDetail from '../components/CafeDetail';
 import ReviewModal from '../components/ReviewModal';
 import AdBanner from '../components/AdBanner';
 import NoneCafeList from '../components/NoneCafeList';
-import SimpleCafeList from '../components/SimpleCafeList';
 import { getCafesNearby, getCafeById, getNearbyCafes } from '../services/cafeService';
 import {
   DropdownMenu,
@@ -20,16 +19,9 @@ import {
 
 import { Cafe } from '../types/cafe';
 
-interface SimpleCafe {
-  name: string;
-  address: string;
-  distance: string;
-}
-
 const Index = () => {
   const [cafes, setCafes] = useState<Cafe[]>([]);
   const [allCafes, setAllCafes] = useState<Cafe[]>([]);
-  const [simpleCafes, setSimpleCafes] = useState<any[]>([]);
   const [selectedCafe, setSelectedCafe] = useState<Cafe | null>(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [loading, setLoading] = useState(true);

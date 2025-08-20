@@ -10,6 +10,26 @@ export function getCafeId(name: string, address: string) {
   return uuidv5(`${name}_${address}`, NAMESPACE);
 }
 
+// 사용자 ID를 UUID로 변환 (소셜 로그인 ID 처리)
+export function convertUserIdToUUID(userId: string): string {
+  // 이미 UUID 형식인지 확인
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  if (uuidRegex.test(userId)) {
+    return userId;
+  }
+  
+  // 소셜 로그인 ID에서 끝의 UUID 부분 추출
+  // 예: "kakao-211064024-0.6983380878505562" -> "0.6983380878505562"
+  const parts = userId.split('-');
+  if (parts.length >= 3) {
+    const uuidPart = parts.slice(-1)[0]; // 마지막 부분
+    return uuidPart;
+  }
+  
+  // UUID 부분을 찾을 수 없는 경우 원본 반환
+  return userId;
+}
+
 // 카카오 장소 검색 API로 카페 정보 가져오기 (x, y 활용, distance 반환)
 async function getCafeInfoFromKakao(name: string, x: number, y: number): Promise<any | null> {
   const KAKAO_API_KEY = import.meta.env.VITE_KAKAO_REST_API_KEY;
@@ -145,15 +165,16 @@ export const insertCafe = async (cafe: Cafe, cafeId: string) => {
 };
 
 // 리뷰 추가
-export const insertReview = async (cafeId: string, review: NewReview): Promise<Review> => {
+export const insertReview = async (cafeId: string, review: NewReview, userId: string, userName: string): Promise<Review> => {
   const today = new Date().toISOString().split('T')[0];
   const time = review.visitTime + ":00:00";
+
 
   const { data, error } = await supabase.from('reviews').insert([
     {
       cafe_id: cafeId,
-      user_name: "test", 
-      user_id: uuidv5("test", NAMESPACE),
+      user_name: userName, 
+      user_id: userId,
       rating: review.rating,
       comment: review.comment,
       date: today,
@@ -204,7 +225,7 @@ export const updateCafeAfterReview = async (cafeId: string, review: NewReview) =
 };
 
 // 메인 함수: 카페 확인 후 리뷰 저장
-export const submitReviewWithCafeCheck = async (cafe: Cafe, review: NewReview) => {
+export const submitReviewWithCafeCheck = async (cafe: Cafe, review: NewReview, userId: string, userName: string) => {
   // 1. 카페 이름과 주소로부터 일관된 ID 생성
   const cafeId = getCafeId(cafe.name, cafe.address);
 
@@ -217,13 +238,12 @@ export const submitReviewWithCafeCheck = async (cafe: Cafe, review: NewReview) =
   }
 
   // 4. 리뷰 추가
-  const newReview = await insertReview(cafeId, review);
+  const newReview = await insertReview(cafeId, review, userId, userName);
 
   // 5. 카페 정보 업데이트 (rating, review_count, features, comments)
   await updateCafeAfterReview(cafeId, review);
 
   return newReview;
-
 };
 
 // DB에서 카페 가져오기
