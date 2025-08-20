@@ -179,9 +179,9 @@ const Index = () => {
       const dbCafes = cafesWithDistance.filter(cafe => cafe.isFromDatabase);
 
       if (dbCafes.length === 0) {
-        // DB 카페가 0개면 SimpleCafeList 표시 (카카오 API 카페들)
+        // DB 카페가 0개면 NoneCafeList 표시
         setShowSimpleList(true);
-        setCafes(cafesWithDistance); // 카카오 API 카페들도 저장
+        setCafes([]); // NoneCafeList는 자체적으로 카페를 가져옴
       } else {
         // DB 카페가 1개 이상이면 기존 로직대로 진행
         setCafes(cafesWithDistance);
@@ -235,6 +235,14 @@ const Index = () => {
     setSelectedCafe(cafe);
   };
 
+  // NoneCafeList에서 카페 데이터를 받는 콜백 (무한 루프 방지)
+  const handleNoneCafeListCafesLoaded = (cafeData: Cafe[]) => {
+    // showSimpleList가 true일 때만 업데이트 (NoneCafeList 모드일 때만)
+    if (showSimpleList) {
+      setCafes(cafeData);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center">
@@ -257,13 +265,12 @@ const Index = () => {
 
   // 바텀시트용 카페 (첫 페이지에 표시되지 않는 나머지 카페들)
   const bottomSheetCafes = showSimpleList 
-    ? cafes.slice(3) // SimpleCafeList에서는 3번째 이후부터
+    ? cafes.slice(3).slice(0, 10) // NoneCafeList에서는 3번째 이후부터 최대 10개
     : cafes.filter(
         cafe => {
           return true;
         }
-      ).slice(4); // 기존 로직에서는 4번째 이후부터
-
+      ).slice(4).slice(0, 10); // 기존 로직에서는 4번째 이후부터 최대 10개
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50">
@@ -393,7 +400,10 @@ const Index = () => {
                   ])
                 ) : (
                   <>
-                    <NoneCafeList onWriteReview={handleNoneCafeWriteReview} />
+                    <NoneCafeList 
+                      onWriteReview={handleNoneCafeWriteReview}
+                      onCafesLoaded={handleNoneCafeListCafesLoaded}
+                    />
                     <div className="flex justify-center mt-4">
                       <AdBanner />
                     </div>
@@ -405,18 +415,9 @@ const Index = () => {
             </>
           ) : (
             <>
-              <SimpleCafeList 
-                cafes={cafes.slice(0, 3).map(cafe => ({
-                  name: cafe.name,
-                  address: cafe.address,
-                  distance: `${cafe.distance}m`
-                }))} 
-                onWriteReview={(simpleCafe) => {
-                  const cafe = cafes.find(c => c.name === simpleCafe.name && c.address === simpleCafe.address);
-                  if (cafe) {
-                    handleWriteReview(cafe);
-                  }
-                }}
+              <NoneCafeList 
+                onWriteReview={handleNoneCafeWriteReview}
+                onCafesLoaded={handleNoneCafeListCafesLoaded}
               />
             </>
           )}
@@ -465,7 +466,9 @@ const Index = () => {
           className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-5/6 sm:w-2/5 bg-white rounded-t-2xl shadow-lg max-h-[280px] overflow-y-auto p-4 z-40 border-t border-gray-200 mb-20"
         >
           {bottomSheetCafes.length === 0 ? (
-            <div className="text-center text-gray-500">더 이상 표시할 카페가 없습니다.</div>
+            <div className="text-center text-gray-500">
+              {showSimpleList ? '더 이상 표시할 카페가 없습니다.' : '근처에 카페가 없습니다.'}
+            </div>
           ) : (
             // 바텀시트용 카페들 표시 (첫 페이지에 표시되지 않는 카페들)
             bottomSheetCafes.map(cafe => (
