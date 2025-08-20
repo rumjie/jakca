@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, Clock, Wifi, Zap, Users, Star, Plus, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import UserProfile from '@/components/auth/UserProfile';
+import { useAuth } from '../contexts/AuthContext';
+import UserProfile from '../components/auth/UserProfile';
 
 import CafeCard from '../components/CafeCard';
 import CafeDetail from '../components/CafeDetail';
@@ -19,8 +19,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
-import { Button } from '../components/ui/button';
-import { useAuth } from '../contexts/AuthContext';
 
 import { Cafe } from '../types/cafe';
 
@@ -35,9 +33,7 @@ const Index = () => {
   const [showCafeListSheet, setShowCafeListSheet] = useState(false); // 슬라이드업 토글 상태 추가
   const [showLoginModal, setShowLoginModal] = useState(false);
   
-  const { user } = useAuth();
-
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   // getDistanceFromLatLonInKm, simpleCafeToCafe 임시 함수 추가
@@ -304,7 +300,7 @@ const Index = () => {
               {/* 인증 상태에 따른 버튼 표시 */}
               {!authLoading && (
                 <>
-                  {isAuthenticated ? (
+                  {user ? (
                     <UserProfile />
                   ) : (
                     <div className="flex space-x-2">
