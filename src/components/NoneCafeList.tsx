@@ -54,15 +54,15 @@ const fetchFranchiseCafes = async (lat: number, lng: number): Promise<Cafe[]> =>
 
   // 추가 카페들: 근처 카페 중 여러 개 선택 (프랜차이즈 제외)
   const res = await fetch(
-    `https://dapi.kakao.com/v2/local/search/category.json?category_group_code=CE7&y=${lat}&x=${lng}&radius=1000&sort=distance&size=10`,
+    `https://dapi.kakao.com/v2/local/search/category.json?category_group_code=CE7&y=${lat}&x=${lng}&radius=1000&sort=distance&size=15`,
     {
       headers: { Authorization: `KakaoAK ${KAKAO_API_KEY}` }
     }
   );
   const data = await res.json();
   if (data.documents && data.documents.length > 0) {
-    // 최대 6개의 추가 카페 가져오기 (총 9개가 되도록)
-    const maxAdditionalCafes = Math.min(6, data.documents.length);
+    // 최대 10개의 추가 카페 가져오기 (총 13개가 되도록)
+    const maxAdditionalCafes = Math.min(10, data.documents.length);
     for (let i = 0; i < maxAdditionalCafes; i++) {
       const item = data.documents[i];
       results.push({
