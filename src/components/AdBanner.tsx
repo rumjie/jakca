@@ -46,6 +46,7 @@ const AdBanner: React.FC = () => {
         data-ad-unit="DAN-HQhZ3WfcpHK5cY8y"
         data-ad-width="320"
         data-ad-height="50"
+
       />
     </div>
   );
