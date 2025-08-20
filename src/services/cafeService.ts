@@ -364,11 +364,11 @@ export async function getNearbyCafes(lat: number, lng: number): Promise<Cafe[]> 
   // 3. DB카페 정보 보완(기존 로직)
   const mergedDbCafes = await Promise.all(
     dbCafes.map(async dbCafe => {
-      let images = dbCafe.images && dbCafe.images.length > 0 ? dbCafe.images : [];
+      let images: string[] = dbCafe.images && dbCafe.images.length > 0 ? dbCafe.images : [];
       console.log('images:', images);
       if (images.length === 0) {
-        const url = await getCafeImageUrl(dbCafe.address, dbCafe.name);
-        if (url) images = [url];
+        const urls = await getCafeImageUrl(dbCafe.address, dbCafe.name);
+        if (urls && urls.length > 0) images = urls;
       }
       const kakaoMatch = kakaoCafes.find(
         k => k.name === dbCafe.name && k.address === dbCafe.address
