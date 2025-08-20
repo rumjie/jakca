@@ -4,11 +4,14 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import UserProfile from '@/components/auth/UserProfile';
+
 import CafeCard from '../components/CafeCard';
 import CafeDetail from '../components/CafeDetail';
 import ReviewModal from '../components/ReviewModal';
 import AdBanner from '../components/AdBanner';
 import NoneCafeList from '../components/NoneCafeList';
+import LoginModal from '../components/LoginModal';
+import UserMenu from '../components/UserMenu';
 import { getCafesNearby, getCafeById, getNearbyCafes } from '../services/cafeService';
 import {
   DropdownMenu,
@@ -16,6 +19,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
+import { Button } from '../components/ui/button';
+import { useAuth } from '../contexts/AuthContext';
 
 import { Cafe } from '../types/cafe';
 
@@ -28,6 +33,9 @@ const Index = () => {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
   const [showSimpleList, setShowSimpleList] = useState(false);
   const [showCafeListSheet, setShowCafeListSheet] = useState(false); // 슬라이드업 토글 상태 추가
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  
+  const { user } = useAuth();
 
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -271,6 +279,7 @@ const Index = () => {
               </div>
             </div>
             <div className="flex items-center space-x-4">
+
               <div className="bg-orange-100 px-3 py-1 rounded-full">
                 <span className="text-sm font-medium text-orange-800">
                   Developed by{' '}
@@ -479,6 +488,12 @@ const Index = () => {
           )}
         </div>
       )}
+
+      {/* Login Modal */}
+      <LoginModal 
+        isOpen={showLoginModal} 
+        onClose={() => setShowLoginModal(false)} 
+      />
     </div>
   );
 };

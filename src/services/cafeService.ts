@@ -180,7 +180,7 @@ export const insertReview = async (cafeId: string, review: NewReview, userId: st
       date: today,
       purpose: review.purpose,
       features: review.features,
-      atmosphere: review.atmosphere,
+      atmosphere: review.atmosphere.join(','),
       visit_date: review.visitDate,
       visit_time: time,
       stay_duration: review.stayDuration,
