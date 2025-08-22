@@ -3,7 +3,7 @@ import { X, Mail, Lock, User } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/use-toast';
 
 interface LoginModalProps {
