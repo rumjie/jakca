@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
 } from './ui/dropdown-menu';
 import { Button } from './ui/button';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 const UserMenu: React.FC = () => {
   const { user, logout } = useAuth();

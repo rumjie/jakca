@@ -192,54 +192,11 @@ export class AuthService {
 
   // 회원가입 (이메일/비밀번호)
   static async signUp(data: SignUpData): Promise<{ user: User | null; error: AuthError | null }> {
-    try {
-      // 1. Supabase Auth로 회원가입
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-      });
-
-      if (authError) {
-        return { user: null, error: { message: authError.message, code: authError.name } };
-      }
-
-      if (!authData.user) {
-        return { user: null, error: { message: '회원가입에 실패했습니다.' } };
-      }
-
-      // 2. users 테이블에 추가 정보 저장
-      const { error: profileError } = await supabase
-        .from('users')
-        .insert([{
-          id: authData.user.id,
-          email: authData.user.email,
-          nickname: data.nickname,
-          platform: data.platform,
-          status: 'active',
-          created_at: new Date().toISOString()
-        }]);
-
-      if (profileError) {
-        // users 테이블 저장 실패 시 auth 계정도 삭제
-        await supabase.auth.signOut();
-        return { user: null, error: { message: '프로필 생성에 실패했습니다.' } };
-      }
-
-      // 3. 생성된 사용자 정보 반환
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', authData.user.id)
-        .single();
-
-      if (userError) {
-        return { user: null, error: { message: '사용자 정보를 가져올 수 없습니다.' } };
-      }
-
-      return { user: userData, error: null };
-    } catch (error) {
-      return { user: null, error: { message: '알 수 없는 오류가 발생했습니다.' } };
-    }
+    // 임시 조치: 이메일/비밀번호 회원가입 비활성화
+    return {
+      user: null,
+      error: { message: '현재는 구글/카카오 소셜 로그인으로만 회원가입이 가능합니다.' }
+    };
   }
 
   // 로그인 (이메일/비밀번호)

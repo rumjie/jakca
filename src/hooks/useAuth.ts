@@ -108,7 +108,7 @@ export const useAuth = () => {
     // 상태
     user,
     session,
-    isAuthenticated: !!user && !!session,
+    isAuthenticated: !!user,
     isLoading: isLoadingUser || isLoadingSession,
     isInitialized,
     

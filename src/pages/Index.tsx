@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, Clock, Wifi, Zap, Users, Star, Plus, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import UserProfile from '../components/auth/UserProfile';
 
 import CafeCard from '../components/CafeCard';

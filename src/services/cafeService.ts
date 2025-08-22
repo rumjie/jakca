@@ -30,6 +30,16 @@ export function convertUserIdToUUID(userId: string): string {
   return userId;
 }
 
+// 비-UUID 형태의 카페 ID(kakao-*)를 조회용 UUID로 안정 변환
+export function convertCafeIdToUUID(cafeId: string): string {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  if (uuidRegex.test(cafeId)) {
+    return cafeId;
+  }
+  // kakao- 등의 비-UUID는 v5로 일관된 UUID 생성
+  return uuidv5(cafeId, NAMESPACE);
+}
+
 // 카카오 장소 검색 API로 카페 정보 가져오기 (x, y 활용, distance 반환)
 async function getCafeInfoFromKakao(name: string, x: number, y: number): Promise<any | null> {
   const KAKAO_API_KEY = import.meta.env.VITE_KAKAO_REST_API_KEY;
@@ -180,7 +190,7 @@ export const insertReview = async (cafeId: string, review: NewReview, userId: st
       date: today,
       purpose: review.purpose,
       features: review.features,
-      atmosphere: review.atmosphere.join(','),
+      atmosphere: review.atmosphere,
       visit_date: review.visitDate,
       visit_time: time,
       stay_duration: review.stayDuration,
