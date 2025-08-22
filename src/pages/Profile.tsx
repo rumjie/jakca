@@ -37,7 +37,7 @@ export default function Profile() {
       const { reviews: userReviews, error: reviewsError } = await ReviewService.getUserReviews(user.id);
       
       if (reviewsError) {
-        console.error('리뷰 로딩 실패:', reviewsError);
+        if (import.meta.env.DEV) console.error('리뷰 로딩 실패:', reviewsError);
         setError('리뷰를 불러오는데 실패했습니다.');
       } else {
         setReviews(userReviews);
@@ -47,13 +47,13 @@ export default function Profile() {
       const { cafes: userLikedCafes, error: likesError } = await ReviewService.getUserLikedCafes(user.id);
       
       if (likesError) {
-        console.error('좋아요 카페 로딩 실패:', likesError);
+        if (import.meta.env.DEV) console.error('좋아요 카페 로딩 실패:', likesError);
         setError('좋아요한 카페를 불러오는데 실패했습니다.');
       } else {
         setLikedCafes(userLikedCafes);
       }
     } catch (error) {
-      console.error('사용자 데이터 로딩 실패:', error);
+      if (import.meta.env.DEV) console.error('사용자 데이터 로딩 실패:', error);
       setError('데이터를 불러오는데 실패했습니다.');
     } finally {
       setLoading(false);
@@ -71,7 +71,7 @@ export default function Profile() {
       const { error } = await ReviewService.deleteReview(cafeId, user.id);
       
       if (error) {
-        console.error('리뷰 삭제 실패:', error);
+        if (import.meta.env.DEV) console.error('리뷰 삭제 실패:', error);
         alert('리뷰 삭제에 실패했습니다.');
       } else {
         // 리뷰 목록에서 제거
@@ -79,7 +79,7 @@ export default function Profile() {
         alert('리뷰가 삭제되었습니다.');
       }
     } catch (error) {
-      console.error('리뷰 삭제 중 오류:', error);
+      if (import.meta.env.DEV) console.error('리뷰 삭제 중 오류:', error);
       alert('리뷰 삭제 중 오류가 발생했습니다- 관리자에게 문의해주세요.');
     }
   };
@@ -95,7 +95,7 @@ export default function Profile() {
       const { error } = await ReviewService.unlikeCafe(cafeId, user.id);
       
       if (error) {
-        console.error('좋아요 취소 실패:', error);
+        if (import.meta.env.DEV) console.error('좋아요 취소 실패:', error);
         alert('좋아요 취소에 실패했습니다.');
       } else {
         // 좋아요 목록에서 제거
@@ -103,7 +103,7 @@ export default function Profile() {
         alert('좋아요가 취소되었습니다.');
       }
     } catch (error) {
-      console.error('좋아요 취소 중 오류:', error);
+      if (import.meta.env.DEV) console.error('좋아요 취소 중 오류:', error);
       alert('좋아요 취소 중 오류가 발생했습니다.');
     }
   };

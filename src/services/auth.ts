@@ -28,11 +28,11 @@ export class AuthService {
       const { data: { user }, error } = await supabase.auth.getUser();
       
       if (error || !user) {
-        console.error('Auth 사용자 정보 가져오기 실패:', error);
+        if (import.meta.env.DEV) console.error('Auth 사용자 정보 가져오기 실패:', error);
         return { user: null, error: { message: '인증에 실패했습니다.' } };
       }
 
-      console.log('Auth 사용자 정보:', {
+      if (import.meta.env.DEV) console.log('Auth 사용자 정보:', {
         id: user.id,
         email: user.email,
         user_metadata: user.user_metadata,
@@ -47,23 +47,23 @@ export class AuthService {
         .single();
 
       if (userError && userError.code === 'PGRST116') {
-        console.log('새 사용자 생성 시작');
+        if (import.meta.env.DEV) console.log('새 사용자 생성 시작');
         // 사용자가 users 테이블에 없으면 새로 생성
         const result = await this.createUserFromAuth(user);
         return result;
       }
 
       if (userError) {
-        console.error('기존 사용자 정보 조회 실패:', userError);
+        if (import.meta.env.DEV) console.error('기존 사용자 정보 조회 실패:', userError);
         return { user: null, error: { message: '사용자 정보를 가져올 수 없습니다.' } };
       }
 
-      console.log('기존 사용자 정보 업데이트 시작');
+      if (import.meta.env.DEV) console.log('기존 사용자 정보 업데이트 시작');
       // 기존 사용자 정보 업데이트
       const result = await this.updateUserFromAuth(user, existingUser);
       return result;
     } catch (error) {
-      console.error('Auth 콜백 처리 중 오류:', error);
+      if (import.meta.env.DEV) console.error('Auth 콜백 처리 중 오류:', error);
       return { user: null, error: { message: '알 수 없는 오류가 발생했습니다.' } };
     }
   }
@@ -97,7 +97,7 @@ export class AuthService {
         }]);
 
       if (insertError) {
-        console.error('사용자 생성 오류:', insertError);
+        if (import.meta.env.DEV) console.error('사용자 생성 오류:', insertError);
         return { user: null, error: { message: '프로필 생성에 실패했습니다.' } };
       }
 
@@ -109,14 +109,14 @@ export class AuthService {
         .single();
 
       if (newUserError) {
-        console.error('생성된 사용자 정보 조회 실패:', newUserError);
+        if (import.meta.env.DEV) console.error('생성된 사용자 정보 조회 실패:', newUserError);
         return { user: null, error: { message: '사용자 정보를 가져올 수 없습니다.' } };
       }
 
-      console.log('생성된 사용자 정보:', newUser);
+      if (import.meta.env.DEV) console.log('생성된 사용자 정보:', newUser);
       return { user: newUser, error: null };
     } catch (error) {
-      console.error('사용자 생성 중 예외 발생:', error);
+      if (import.meta.env.DEV) console.error('사용자 생성 중 예외 발생:', error);
       return { user: null, error: { message: '사용자 생성 중 오류가 발생했습니다.' } };
     }
   }
@@ -155,7 +155,7 @@ export class AuthService {
           .eq('id', authUser.id);
 
         if (updateError) {
-          console.error('사용자 업데이트 오류:', updateError);
+          if (import.meta.env.DEV) console.error('사용자 업데이트 오류:', updateError);
           // 업데이트 실패해도 기존 사용자 정보 반환
         }
       }
@@ -173,7 +173,7 @@ export class AuthService {
 
       return { user: updatedUser, error: null };
     } catch (error) {
-      console.error('사용자 업데이트 중 오류:', error);
+      if (import.meta.env.DEV) console.error('사용자 업데이트 중 오류:', error);
       return { user: null, error: { message: '사용자 업데이트 중 오류가 발생했습니다.' } };
     }
   }

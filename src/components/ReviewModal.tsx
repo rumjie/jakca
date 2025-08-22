@@ -105,7 +105,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ cafe, onClose, onSubmit }) =>
       await submitReviewWithCafeCheck(cafe, review, userId, userName);
       onSubmit(review);
     } catch (error) {
-      console.error('리뷰 제출 실패:', error);
+      if (import.meta.env.DEV) console.error('리뷰 제출 실패:', error);
       alert('리뷰 제출에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setIsSubmitting(false);

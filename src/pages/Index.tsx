@@ -44,7 +44,7 @@ const Index = () => {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
-          console.log('위치 정보:', latitude, longitude);
+          if (import.meta.env.DEV) console.log('위치 정보:', latitude, longitude);
           const KAKAO_API_KEY = import.meta.env.VITE_KAKAO_REST_API_KEY;
           try {
             const response = await fetch(
@@ -56,7 +56,7 @@ const Index = () => {
               }
             );
             const data = await response.json();
-            // console.log('카카오 API 응답:', data); // 디버깅용
+            // if (import.meta.env.DEV) console.log('카카오 API 응답:', data); // 디버깅용
 
             let address = '내 위치';
             if (data.documents && data.documents.length > 0) {
@@ -94,13 +94,13 @@ const Index = () => {
             }
             setUserLocation({ lat: latitude, lng: longitude, address });
           } catch (e) {
-            console.error('카카오 역지오코딩 실패:', e);
+            if (import.meta.env.DEV) console.error('카카오 역지오코딩 실패:', e);
             setUserLocation(null);
           }
           loadCafes(latitude, longitude);
         },
         (error) => {
-          console.error('위치 정보 에러 상세:', {
+          if (import.meta.env.DEV) console.error('위치 정보 에러 상세:', {
             code: error.code,
             message: error.message,
             PERMISSION_DENIED: error.code === 1,
@@ -129,13 +129,13 @@ const Index = () => {
             address: '서울 중구'
           };
           
-          console.log('기본 위치로 대체:', defaultLocation);
+          if (import.meta.env.DEV) console.log('기본 위치로 대체:', defaultLocation);
           setUserLocation(defaultLocation);
           loadCafes(defaultLocation.lat, defaultLocation.lng);
           
           // 사용자에게 안내 (선택사항)
           if (error.code === 2) {
-            console.warn('💡 위치 정보를 사용할 수 없습니다. 네트워크 연결과 GPS 신호를 확인해주세요.');
+            if (import.meta.env.DEV) console.warn('💡 위치 정보를 사용할 수 없습니다. 네트워크 연결과 GPS 신호를 확인해주세요.');
           }
         }
       );
@@ -184,7 +184,7 @@ const Index = () => {
         setShowSimpleList(false);
       }
     } catch (error) {
-      console.error('카페 데이터 로딩 실패:', error);
+      if (import.meta.env.DEV) console.error('카페 데이터 로딩 실패:', error);
       setShowSimpleList(true);
       setCafes([]);
     } finally {
@@ -205,7 +205,7 @@ const Index = () => {
       const cafe = await getCafeById(cafeId);
       setSelectedCafe(cafe);
     } catch (error) {
-      console.error('카페 상세 정보 로딩 실패:', error);
+      if (import.meta.env.DEV) console.error('카페 상세 정보 로딩 실패:', error);
     }
   };
 

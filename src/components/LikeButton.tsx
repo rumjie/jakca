@@ -42,7 +42,7 @@ export default function LikeButton({
         setLikeStatus(status);
       }
     } catch (error) {
-      console.error('좋아요 상태 로딩 실패:', error);
+      if (import.meta.env.DEV) console.error('좋아요 상태 로딩 실패:', error);
     }
   };
 
@@ -53,7 +53,7 @@ export default function LikeButton({
         setLikeCount(count);
       }
     } catch (error) {
-      console.error('좋아요 개수 로딩 실패:', error);
+      if (import.meta.env.DEV) console.error('좋아요 개수 로딩 실패:', error);
     }
   };
 
@@ -75,7 +75,7 @@ export default function LikeButton({
           setLikeCount(prev => Math.max(0, prev - 1));
           onLikeChange?.(false, likeCount - 1);
         } else {
-          console.error('좋아요 취소 실패:', error);
+          if (import.meta.env.DEV) console.error('좋아요 취소 실패:', error);
         }
       } else {
         // 좋아요 추가
@@ -85,11 +85,11 @@ export default function LikeButton({
           setLikeCount(prev => prev + 1);
           onLikeChange?.(true, likeCount + 1);
         } else {
-          console.error('좋아요 추가 실패:', error);
+          if (import.meta.env.DEV) console.error('좋아요 추가 실패:', error);
         }
       }
     } catch (error) {
-      console.error('좋아요 토글 중 오류:', error);
+      if (import.meta.env.DEV) console.error('좋아요 토글 중 오류:', error);
     } finally {
       setIsLoading(false);
     }
