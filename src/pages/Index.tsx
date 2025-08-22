@@ -329,7 +329,7 @@ const Index = () => {
             작업하기 좋은 카페를 찾아서, 작카! <br />
             내 주변의 공부, 독서, 미팅, 작업하기 좋은 카페를 추천해드립니다. <br />
             개선 의견이 있으시다면 github의 연락처를 참고해주세요 💕 <br />
-            <span className="text-sm">버전 정보: 1.0.0 / last updated: 2025-07-21</span>
+            <span className="text-sm">버전 정보: 1.1.0 / last updated: 2025-08-22</span>
             </h2>
           </div>
 
