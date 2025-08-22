@@ -108,7 +108,7 @@ export const getCafesNearby = async (lat: number, lng: number): Promise<Cafe[]> 
     return [...cafesWithKakao, ...additionalCafes];
   }
 
-  console.log('kakaoInfo:', data);
+  if (import.meta.env.DEV) console.log('kakaoInfo:', data);
   return cafesWithKakao;
 };
 
@@ -395,7 +395,7 @@ export async function getNearbyCafes(lat: number, lng: number): Promise<Cafe[]> 
   const mergedDbCafes = await Promise.all(
     dbCafes.map(async dbCafe => {
       let images: string[] = dbCafe.images && dbCafe.images.length > 0 ? dbCafe.images : [];
-      console.log('images:', images);
+      if (import.meta.env.DEV) console.log('images:', images);
       if (images.length === 0) {
         const urls = await getCafeImageUrl(dbCafe.address, dbCafe.name);
         if (urls && urls.length > 0) images = urls;
@@ -438,8 +438,8 @@ export async function getCafeImageUrl(cafeAddress: string, cafeName: string): Pr
     }
   );
   const data = await response.json();
-  console.log('address check:', cafeAddress.split(' ').slice(1, 3).join(' ')); // 시/도, 구까지만 표시
-  console.log('카카오 이미지 응답:', data.documents?.length); 
+  if (import.meta.env.DEV) console.log('address check:', cafeAddress.split(' ').slice(1, 3).join(' ')); // 시/도, 구까지만 표시
+  if (import.meta.env.DEV) console.log('카카오 이미지 응답:', data.documents?.length); 
 
   return data.documents?.map(doc => doc.image_url) || [];
 }
@@ -498,7 +498,7 @@ export async function getCafeThumbnail(cafeAddress: string, cafeName: string): P
     });
 
     if (!response.ok) {
-      console.error('Gemini API 호출 실패:', await response.text());
+      if (import.meta.env.DEV) console.error('Gemini API 호출 실패:', await response.text());
       return imageUrls[0]; // 실패시 첫번째 이미지 반환
     }
 
@@ -506,7 +506,7 @@ export async function getCafeThumbnail(cafeAddress: string, cafeName: string): P
     const index = parseInt(text);
     return !isNaN(index) && index < imageUrls.length ? imageUrls[index] : imageUrls[0];
   } catch (error) {
-    console.error('썸네일 선택 중 에러:', error);
+    if (import.meta.env.DEV) console.error('썸네일 선택 중 에러:', error);
     return imageUrls[0]; // 에러 발생시 첫번째 이미지 반환
   }
 }
